@@ -1,0 +1,24 @@
+<button class="backdrop" type="button" aria-label="Close reward dialog" (click)="closed.emit()"></button>
+<section class="modal" role="dialog" aria-modal="true" [attr.aria-label]="reward() ? 'Edit reward' : 'Add reward'">
+  <header>
+    <div class="header-icon">{{ reward() ? '✎' : '＋' }}</div>
+    <span><h2>{{ reward() ? 'Edit reward' : 'Add a new reward' }}</h2><p>{{ reward() ? 'Update this reward’s details and availability.' : 'Create an incentive your customers will work toward.' }}</p></span>
+    <button type="button" aria-label="Close dialog" (click)="closed.emit()">×</button>
+  </header>
+  <div class="body">
+    <div class="preview" [style.--reward-color]="color()">
+      <i>{{ icon() }}</i><span><small>{{ category() }}</small><b>{{ name() || 'Reward name' }}</b><p>{{ description() || 'Your reward description will appear here.' }}</p></span><strong>✦ {{ (points() || 0).toLocaleString() }}</strong>
+    </div>
+    <div class="form-grid">
+      <label class="field wide"><span>Reward name</span><input maxlength="60" placeholder="e.g. Free Specialty Coffee" [ngModel]="name()" (ngModelChange)="name.set($event)" autofocus /></label>
+      <label class="field wide"><span>Description</span><textarea rows="3" maxlength="160" placeholder="Briefly explain what the customer receives" [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea></label>
+      <label class="field"><span>Required points</span><div class="points-input"><i>✦</i><input type="number" min="1" max="100000" [ngModel]="points()" (ngModelChange)="points.set($event)" /></div></label>
+      <label class="field"><span>Category</span><select [ngModel]="category()" (ngModelChange)="category.set($event)">@for (option of categories; track option) { <option [value]="option">{{ option }}</option> }</select></label>
+    </div>
+    <fieldset><legend>Reward icon</legend><div class="icon-options">@for (option of icons; track option) { <button type="button" [class.selected]="icon() === option" (click)="icon.set(option)">{{ option }}</button> }</div></fieldset>
+    <fieldset><legend>Accent color</legend><div class="color-options">@for (option of colors; track option) { <button type="button" [class.selected]="color() === option" [style.background]="option" [attr.aria-label]="'Use color ' + option" (click)="color.set(option)"></button> }</div></fieldset>
+    <label class="availability"><span><b>Active reward</b><small>Customers can see and redeem this reward.</small></span><input type="checkbox" [ngModel]="active()" (ngModelChange)="active.set($event)" /><i></i></label>
+    @if (error()) { <p class="error" role="alert"><span>!</span>{{ error() }}</p> }
+  </div>
+  <footer><button class="cancel" type="button" (click)="closed.emit()">Cancel</button><button class="save" type="button" (click)="submit()">{{ reward() ? 'Save changes' : 'Create reward' }}</button></footer>
+</section>

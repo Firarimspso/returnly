@@ -1,0 +1,37 @@
+.period { padding: 9px 12px; border: 1px solid #e4e2e9; border-radius: 8px; color: #6e6975; background: #fff; font-size: 10px; }
+.period span { margin-left: 14px; }
+.kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.charts { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(230px,.75fr); gap: 14px; margin-top: 14px; }
+.panel { border: 1px solid #e9e8ee; border-radius: 12px; background: #fff; }
+.panel header { display: flex; align-items: center; justify-content: space-between; padding: 18px 19px; border-bottom: 1px solid #efedf2; }
+.panel header > span { display: flex; flex-direction: column; }
+.panel header b { font-size: 11px; }
+.panel header small { margin-top: 4px; color: #9894a0; font-size: 8px; }
+.legend { color: #898491; font-size: 8px; }
+.legend i { display: inline-block; width: 7px; height: 7px; margin: 0 4px 0 10px; border-radius: 2px; background: var(--violet); }
+.legend i:nth-child(2) { background: #ded9ef; }
+.chart-area { display: flex; height: 210px; padding: 24px 22px 0; }
+.y-axis { display: flex; width: 32px; flex-direction: column; justify-content: space-between; padding-bottom: 4px; color: #aaa6b1; font-size: 7px; }
+.bar-chart { display: flex; min-width: 0; flex: 1; align-items: end; justify-content: space-around; gap: 5px; border-bottom: 1px solid #e8e5ed; background: repeating-linear-gradient(to bottom,#f1eff4 0 1px,transparent 1px 52px); }
+.bar-chart div { display: flex; width: 5%; height: 100%; align-items: end; gap: 2px; }
+.bar-chart i,.bar-chart b { width: 50%; border-radius: 3px 3px 0 0; background: var(--violet); }
+.bar-chart b { background: #dfdaef; }
+.x-axis { display: flex; justify-content: space-between; padding: 9px 22px 18px 54px; color: #aaa6b1; font-size: 7px; }
+.redemption header button { border: 0; background: transparent; color: #9995a1; }
+.donut { display: grid; width: 125px; height: 125px; margin: 25px auto 20px; place-items: center; border-radius: 50%; background: conic-gradient(#6952e8 0 42%,#9b83ef 42% 73%,#d1c7f8 73% 91%,#ece8fb 91%); }
+.donut::before { content:''; position:absolute; width:77px; height:77px; border-radius:50%; background:#fff; }
+.donut span { z-index:1; display:flex; flex-direction:column; text-align:center; }
+.donut b { font-size:17px; }.donut small { color:#9995a0;font-size:8px; }
+.redemption ul { margin: 0; padding: 0 20px 18px; list-style:none; }
+.redemption li { display:flex;align-items:center;padding:6px 0;font-size:8px; }
+.redemption li i { width:7px;height:7px;margin-right:7px;border-radius:2px;background:#6952e8; }
+.redemption li:nth-child(2) i{background:#9b83ef}.redemption li:nth-child(3) i{background:#d1c7f8}.redemption li:nth-child(4) i{background:#ece8fb}
+.redemption li span{flex:1;color:#77727f}.bottom-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}
+.panel header a { color:var(--violet);font-size:8px;font-weight:700;text-decoration:none }
+.activity-head,.activity-row{display:grid;grid-template-columns:1fr 1.35fr .45fr;align-items:center;padding:9px 19px}
+.activity-head{color:#a19da7;background:#faf9fb;font-size:7px;text-transform:uppercase}
+.activity-row{min-height:54px;border-top:1px solid #f2f0f4;font-size:8px}.activity-row>span{display:flex;flex-direction:column}.activity-row small{margin-top:3px;color:#9995a0}.person{flex-direction:row!important;align-items:center}
+.person i{display:grid;width:27px;height:27px;margin-right:8px;place-items:center;border-radius:7px;color:#fff;font-size:7px;font-style:normal}.activity-row time{color:#9995a0}
+.reward{display:flex;align-items:center;padding:12px 18px;border-top:1px solid #f1eff3}.reward>i{display:grid;width:33px;height:33px;place-items:center;border-radius:8px;color:#6952e8;background:#f0edff;font-style:normal}.reward span{display:flex;flex:1;flex-direction:column;margin-left:9px}.reward b{font-size:9px}.reward small{margin-top:3px;color:#9995a0;font-size:8px}.reward strong{font-size:11px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.redemption{display:grid;grid-template-columns:1fr 1fr}.redemption header{grid-column:1/-1}.bottom-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}.redemption{display:block}.legend{display:none}.activity{overflow:auto}.activity-head,.activity-row{min-width:520px}}

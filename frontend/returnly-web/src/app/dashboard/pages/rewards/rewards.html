@@ -1,0 +1,83 @@
+<app-page-header title="Rewards" description="Create and manage rewards that keep customers coming back.">
+  <button class="primary-button" type="button" (click)="openAdd()">＋ Add reward</button>
+</app-page-header>
+
+<section class="statistics" aria-label="Reward statistics">
+  <article><span class="stat-icon active">◇</span><div><small>Active rewards</small><b>{{ activeRewards() }}</b><p>of {{ data.rewards().length }} total rewards</p></div></article>
+  <article><span class="stat-icon redemptions">↗</span><div><small>Total redemptions</small><b>{{ totalRedemptions().toLocaleString() }}</b><p>Across all reward types</p></div></article>
+  <article><span class="stat-icon popular">★</span><div><small>Most popular reward</small><b>{{ popularReward()?.name || 'No rewards yet' }}</b><p>{{ popularReward()?.redemptions || 0 }} total redemptions</p></div></article>
+</section>
+
+<section class="management">
+  <header class="toolbar">
+    <label class="search">
+      <span>⌕</span><input type="search" placeholder="Search rewards..." [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      @if (search()) { <button type="button" aria-label="Clear search" (click)="search.set('')">×</button> }
+    </label>
+    <div class="status-filters" aria-label="Filter rewards by status">
+      @for (option of statusOptions; track option) {
+        <button type="button" [class.active]="statusFilter() === option" (click)="statusFilter.set(option)">{{ option }}</button>
+      }
+    </div>
+    <select aria-label="Filter by category" [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)">
+      @for (category of categories; track category) { <option [value]="category">{{ category }}</option> }
+    </select>
+    <div class="view-toggle" aria-label="Change reward view">
+      <button type="button" aria-label="Grid view" [class.active]="view() === 'grid'" (click)="view.set('grid')">▦</button>
+      <button type="button" aria-label="Table view" [class.active]="view() === 'table'" (click)="view.set('table')">☷</button>
+    </div>
+  </header>
+
+  @if (rewards().length) {
+    @if (view() === 'grid') {
+      <div class="reward-grid">
+        @for (reward of rewards(); track reward.id) {
+          <article class="reward-card" [class.inactive]="!reward.active" [style.--reward-color]="reward.color">
+            <header>
+              <span class="reward-icon">{{ reward.icon }}</span>
+              <label class="toggle" [attr.aria-label]="(reward.active ? 'Deactivate ' : 'Activate ') + reward.name">
+                <input type="checkbox" [checked]="reward.active" (change)="data.setRewardActive(reward.id, !reward.active)" /><i></i>
+              </label>
+            </header>
+            <div class="category-row"><span>{{ reward.category }}</span><i [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</i></div>
+            <h2>{{ reward.name }}</h2><p>{{ reward.description }}</p>
+            <div class="reward-metrics"><span><small>Required points</small><b>✦ {{ reward.points.toLocaleString() }}</b></span><span><small>Redemptions</small><b>{{ reward.redemptions.toLocaleString() }}</b></span></div>
+            <footer><span>Created {{ reward.createdAt }}</span><div><button type="button" [attr.aria-label]="'Edit ' + reward.name" (click)="openEdit(reward)">✎</button><button class="delete" type="button" [attr.aria-label]="'Delete ' + reward.name" (click)="deletingRewardId.set(reward.id)">⌫</button></div></footer>
+          </article>
+        }
+        <button class="add-card" type="button" (click)="openAdd()"><span>＋</span><b>Create another reward</b><small>Add an incentive customers will love</small></button>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Reward</th><th>Category</th><th>Points</th><th>Redemptions</th><th>Status</th><th>Created</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            @for (reward of rewards(); track reward.id) {
+              <tr>
+                <td><span class="table-reward" [style.--reward-color]="reward.color"><i>{{ reward.icon }}</i><span><b>{{ reward.name }}</b><small>{{ reward.description }}</small></span></span></td>
+                <td><span class="category">{{ reward.category }}</span></td><td><strong class="point-value">✦ {{ reward.points.toLocaleString() }}</strong></td><td>{{ reward.redemptions.toLocaleString() }}</td>
+                <td><label class="table-status"><span [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</span><input type="checkbox" [checked]="reward.active" (change)="data.setRewardActive(reward.id, !reward.active)" /><i></i></label></td>
+                <td>{{ reward.createdAt }}</td><td><div class="row-actions"><button type="button" (click)="openEdit(reward)">✎</button><button class="delete" type="button" (click)="deletingRewardId.set(reward.id)">⌫</button></div></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else {
+    <div class="empty"><span>◇</span><h2>No rewards found</h2><p>Try changing your search or filters, or create a new reward.</p><div><button type="button" (click)="clearFilters()">Clear filters</button><button class="primary-button" type="button" (click)="openAdd()">＋ Add reward</button></div></div>
+  }
+</section>
+
+@if (formOpen()) {
+  <app-reward-form-modal [reward]="editingReward()" (closed)="closeForm()" (saved)="saveReward($event)" />
+}
+@if (deletingReward(); as reward) {
+  <app-confirmation-dialog
+    title="Delete this reward?"
+    [message]="'“' + reward.name + '” will be permanently removed. Existing customer activity will not be changed.'"
+    confirmLabel="Delete reward"
+    (closed)="deletingRewardId.set(null)"
+    (confirmed)="confirmDelete()"
+  />
+}

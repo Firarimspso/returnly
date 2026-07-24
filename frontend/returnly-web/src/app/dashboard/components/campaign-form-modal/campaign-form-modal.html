@@ -1,0 +1,18 @@
+<button class="backdrop" type="button" aria-label="Close campaign dialog" (click)="closed.emit()"></button>
+<section class="modal" role="dialog" aria-modal="true" [attr.aria-label]="campaign() ? 'Edit campaign' : 'Create campaign'">
+  <header><div class="header-icon">↗</div><span><h2>{{ campaign() ? 'Edit campaign' : 'Create campaign' }}</h2><p>Build a targeted promotion and choose when it launches.</p></span><button type="button" aria-label="Close dialog" (click)="closed.emit()">×</button></header>
+  <div class="body">
+    <label class="field"><span>Campaign name</span><input maxlength="70" placeholder="e.g. Weekend Double Points" [ngModel]="name()" (ngModelChange)="name.set($event)" autofocus /></label>
+    <fieldset><legend>Campaign type</legend><div class="type-grid">@for (option of types; track option.value) { <button type="button" [class.selected]="type() === option.value" (click)="type.set(option.value)"><i>{{ option.icon }}</i><span>{{ option.value }}</span></button> }</div></fieldset>
+    <div class="form-grid">
+      <label class="field"><span>Audience</span><select [ngModel]="audience()" (ngModelChange)="audience.set($event)">@for (option of audiences; track option) { <option [value]="option">{{ option }}</option> }</select></label>
+      <label class="field"><span>{{ incentiveLabel() }}</span><div class="incentive"><input type="number" min="1" [ngModel]="incentiveValue()" (ngModelChange)="incentiveValue.set($event)" /><i>{{ incentiveSuffix() }}</i></div></label>
+      <label class="field wide"><span>Customer message</span><textarea rows="3" maxlength="180" placeholder="Write the message customers will receive..." [ngModel]="message()" (ngModelChange)="message.set($event)"></textarea><small>{{ message().length }}/180 characters</small></label>
+      <label class="field"><span>Start date</span><input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" /></label>
+      <label class="field"><span>End date</span><input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" /></label>
+    </div>
+    <fieldset><legend>Launch option</legend><div class="launch-options">@for (option of launchOptions; track option.value) { <button type="button" [class.selected]="status() === option.value" (click)="status.set(option.value)"><i>@if (status() === option.value) { ✓ }</i><span><b>{{ option.title }}</b><small>{{ option.description }}</small></span></button> }</div></fieldset>
+    @if (error()) { <p class="error" role="alert"><span>!</span>{{ error() }}</p> }
+  </div>
+  <footer><button type="button" (click)="closed.emit()">Cancel</button><button class="primary" type="button" (click)="submit()">{{ campaign() ? 'Save changes' : status() === 'Active' ? 'Launch campaign' : 'Create campaign' }}</button></footer>
+</section>

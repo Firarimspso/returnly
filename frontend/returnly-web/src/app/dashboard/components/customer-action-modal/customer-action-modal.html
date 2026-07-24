@@ -1,0 +1,77 @@
+<button class="modal-backdrop" type="button" aria-label="Close dialog" (click)="closed.emit()"></button>
+<section class="modal" role="dialog" aria-modal="true" [attr.aria-label]="title">
+  <header>
+    <div class="modal-icon">
+      @switch (mode()) {
+        @case ('points') { ✦ }
+        @case ('reward') { ◇ }
+        @case ('edit') { ✎ }
+      }
+    </div>
+    <span><h2>{{ title }}</h2><p>{{ description }}</p></span>
+    <button class="close" type="button" aria-label="Close dialog" (click)="closed.emit()">×</button>
+  </header>
+
+  <div class="modal-body">
+    <div class="customer-strip">
+      <i [style.background]="customer().color">{{ customer().initials }}</i>
+      <span><b>{{ customer().name }}</b><small>{{ customer().points.toLocaleString() }} current points</small></span>
+    </div>
+
+    @switch (mode()) {
+      @case ('points') {
+        <label class="field">
+          <span>Points to add</span>
+          <div class="point-input"><i>✦</i><input type="number" min="1" max="10000" placeholder="e.g. 250" [ngModel]="points()" (ngModelChange)="points.set($event)" autofocus /></div>
+          <small>Current balance will become {{ (customer().points + (points() || 0)).toLocaleString() }} points.</small>
+        </label>
+        <label class="field">
+          <span>Reason or note <em>Optional</em></span>
+          <textarea rows="3" placeholder="Manual adjustment, event bonus..." [ngModel]="note()" (ngModelChange)="note.set($event)"></textarea>
+        </label>
+        <div class="info-box"><i>i</i><p>Added points increase both the current balance and lifetime points, and are recorded in customer activity.</p></div>
+      }
+      @case ('reward') {
+        <div class="reward-list" role="radiogroup" aria-label="Available rewards">
+          @for (reward of eligibleRewards(); track reward.id) {
+            <label [class.selected]="selectedRewardId() === reward.id" [class.unavailable]="customer().points < reward.points">
+              <input type="radio" name="reward" [value]="reward.id" [ngModel]="selectedRewardId()" (ngModelChange)="selectedRewardId.set(reward.id)" />
+              <i>{{ reward.icon }}</i>
+              <span><b>{{ reward.name }}</b><small>{{ reward.description }}</small></span>
+              <strong>✦ {{ reward.points.toLocaleString() }}</strong>
+            </label>
+          }
+        </div>
+        @if (selectedReward(); as reward) {
+          <div class="balance-preview" [class.warning]="insufficientPoints()">
+            <span><small>Current balance</small><b>{{ customer().points.toLocaleString() }}</b></span><i>−</i>
+            <span><small>Reward cost</small><b>{{ reward.points.toLocaleString() }}</b></span><i>=</i>
+            <span><small>Remaining</small><b>{{ customer().points - reward.points }}</b></span>
+          </div>
+        }
+      }
+      @case ('edit') {
+        <div class="form-grid">
+          <label class="field wide"><span>Full name</span><input [ngModel]="name()" (ngModelChange)="name.set($event)" /></label>
+          <label class="field"><span>Phone number</span><input type="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" /></label>
+          <label class="field"><span>Email address</span><input type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" /></label>
+          <label class="field"><span>Birthday</span><input [ngModel]="birthday()" (ngModelChange)="birthday.set($event)" /></label>
+          <label class="field"><span>Customer status</span><select [ngModel]="status()" (ngModelChange)="status.set($event)">@for (option of statusOptions; track option) { <option [value]="option">{{ option }}</option> }</select></label>
+        </div>
+      }
+    }
+
+    @if (error()) { <p class="error" role="alert"><span>!</span>{{ error() }}</p> }
+  </div>
+
+  <footer>
+    <button class="cancel" type="button" (click)="closed.emit()">Cancel</button>
+    <button class="submit" type="button" [disabled]="mode() === 'reward' && insufficientPoints()" (click)="submit()">
+      @switch (mode()) {
+        @case ('points') { Add Points }
+        @case ('reward') { Redeem Reward }
+        @case ('edit') { Save Changes }
+      }
+    </button>
+  </footer>
+</section>

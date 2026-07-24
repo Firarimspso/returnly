@@ -1,0 +1,51 @@
+<div class="portal" [class.sidebar-collapsed]="sidebarCollapsed()">
+  @if (mobileOpen()) { <button class="backdrop" aria-label="Close navigation" (click)="closeMobile()"></button> }
+  <aside [class.mobile-open]="mobileOpen()">
+    <a class="brand" routerLink="/" aria-label="Returnly home">
+      <span class="brand-mark"><i></i></span><strong>Returnly</strong>
+    </a>
+    <div class="workspace">
+      <span class="restaurant-logo">SM</span>
+      <span><b>Solé & Maple</b><small>Downtown location</small></span>
+      <i>⌄</i>
+    </div>
+    <nav aria-label="Restaurant portal">
+      <span class="nav-label">Workspace</span>
+      @for (item of navItems; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.exact ?? false }" (click)="closeMobile()">
+          <i>{{ item.icon }}</i><span>{{ item.label }}</span>
+        </a>
+      }
+      <span class="nav-label manage">Manage</span>
+      <a routerLink="/dashboard/settings" routerLinkActive="active" (click)="closeMobile()"><i>⚙</i><span>Settings</span></a>
+    </nav>
+    <div class="upgrade">
+      <span>✦</span><b>Unlock more growth</b><p>Upgrade to Pro for advanced insights.</p><button>View plans</button>
+    </div>
+    <button class="collapse" type="button" (click)="toggleSidebar()"><span>‹</span><b>Collapse sidebar</b></button>
+  </aside>
+
+  <section class="shell">
+    <header class="topbar">
+      <button class="menu" type="button" aria-label="Toggle sidebar" (click)="toggleSidebar()">☰</button>
+      <label class="global-search"><span>⌕</span><input type="search" placeholder="Search anything..." /><kbd>⌘ K</kbd></label>
+      <div class="top-actions">
+        <button class="notification" type="button" aria-label="Notifications">♢<i></i></button>
+        <div class="profile-wrap">
+          <button class="profile" type="button" aria-label="Open restaurant profile" [attr.aria-expanded]="profileOpen()" (click)="toggleProfile($event)">
+            <span>AM</span><b>Adam Miller</b><i>⌄</i>
+          </button>
+          @if (profileOpen()) {
+            <div class="profile-menu" (click)="$event.stopPropagation()">
+              <span><b>Adam Miller</b><small>owner&#64;solemaple.com</small></span>
+              <a routerLink="/dashboard/settings">Restaurant settings</a>
+              <a routerLink="/">View public site</a>
+              <button type="button">Sign out</button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+    <main class="portal-content"><router-outlet /></main>
+  </section>
+</div>

@@ -1,0 +1,51 @@
+<button class="drawer-backdrop" type="button" aria-label="Close customer details" (click)="closed.emit()"></button>
+<aside class="drawer" role="dialog" aria-modal="true" [attr.aria-label]="'Customer details for ' + customer().name">
+  <header>
+    <span>Customer profile</span>
+    <button type="button" aria-label="Close customer details" (click)="closed.emit()">×</button>
+  </header>
+
+  <div class="drawer-scroll">
+    <section class="identity">
+      <div class="photo" [style.background]="customer().color">{{ customer().initials }}</div>
+      <h2>{{ customer().name }}</h2>
+      <span class="status" [class]="customer().status.toLowerCase()">{{ customer().status }}</span>
+      <p>Customer since March 2025</p>
+    </section>
+
+    <div class="primary-actions">
+      <button type="button" (click)="actionSelected.emit('points')"><i>＋</i><span>Add Points</span></button>
+      <button type="button" (click)="actionSelected.emit('reward')"><i>◇</i><span>Redeem Reward</span></button>
+      <button type="button" (click)="actionSelected.emit('edit')"><i>✎</i><span>Edit Customer</span></button>
+    </div>
+
+    <section class="contact">
+      <h3>Contact information</h3>
+      <div><i>☎</i><span><small>Phone</small><a [href]="'tel:' + customer().phone">{{ customer().phone }}</a></span></div>
+      <div><i>✉</i><span><small>Email</small><a [href]="'mailto:' + customer().email">{{ customer().email }}</a></span></div>
+      <div><i>♢</i><span><small>Birthday</small><b>{{ customer().birthday }}</b></span></div>
+    </section>
+
+    <section class="stats">
+      <article><span>⌂</span><b>{{ customer().visits }}</b><small>Total Visits</small></article>
+      <article><span>✦</span><b>{{ customer().lifetimePoints.toLocaleString() }}</b><small>Lifetime Points</small></article>
+      <article><span>●</span><b>{{ customer().points.toLocaleString() }}</b><small>Current Points</small></article>
+      <article><span>◇</span><b>{{ customer().rewardsRedeemed }}</b><small>Rewards Redeemed</small></article>
+    </section>
+
+    <section class="preferences">
+      <div><span><small>Favorite reward</small><b>{{ customer().favoriteReward }}</b></span><i>★</i></div>
+      <div><span><small>Last visit</small><b>{{ customer().lastVisit }}</b></span><i>◷</i></div>
+    </section>
+
+    <section class="timeline">
+      <h3>Recent activity</h3>
+      @for (item of customer().activity; track item.date + item.title) {
+        <article>
+          <i>{{ item.icon }}</i>
+          <span><b>{{ item.title }}</b><small>{{ item.description }}</small><time>{{ item.date }}</time></span>
+        </article>
+      }
+    </section>
+  </div>
+</aside>

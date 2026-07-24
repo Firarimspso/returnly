@@ -1,0 +1,15 @@
+.statistics {
+  border-block: 1px solid var(--line);
+  padding: 68px 0;
+}
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.stat-grid div { text-align: center; }
+.stat-grid div + div { border-left: 1px solid var(--line); }
+strong { font-family: 'Manrope', sans-serif; font-size: clamp(38px, 5vw, 54px); letter-spacing: -0.055em; }
+strong span { color: var(--violet); }
+p { margin: 8px 0 0; color: var(--muted); font-size: 14px; font-weight: 600; }
+@media (max-width: 560px) {
+  .statistics { padding: 35px 0; }
+  .stat-grid { grid-template-columns: 1fr; gap: 28px; }
+  .stat-grid div + div { border-top: 1px solid var(--line); border-left: 0; padding-top: 28px; }
+}

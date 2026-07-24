@@ -1,0 +1,5 @@
+<button class="backdrop" type="button" aria-label="Close confirmation" (click)="closed.emit()"></button>
+<section class="dialog" role="alertdialog" aria-modal="true" [attr.aria-label]="title()">
+  <span class="warning">!</span><h2>{{ title() }}</h2><p>{{ message() }}</p>
+  <div><button type="button" (click)="closed.emit()">Cancel</button><button class="danger" type="button" (click)="confirmed.emit()">{{ confirmLabel() }}</button></div>
+</section>

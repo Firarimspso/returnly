@@ -1,0 +1,21 @@
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-intro">
+      <p class="eyebrow">Everything you need</p>
+      <h2 class="section-heading">Loyalty made beautifully simple</h2>
+      <p class="section-copy">Powerful tools for building stronger customer relationships, without the complexity.</p>
+    </div>
+    <div class="feature-grid">
+      @for (feature of features; track feature.title) {
+        <article>
+          <span class="icon" [class]="feature.tone">{{ feature.icon }}</span>
+          <h3>{{ feature.title }}</h3>
+          <p>{{ feature.description }}</p>
+          <a href="#get-started" [attr.aria-label]="'Learn more about ' + feature.title">
+            Learn more <span>→</span>
+          </a>
+        </article>
+      }
+    </div>
+  </div>
+</section>

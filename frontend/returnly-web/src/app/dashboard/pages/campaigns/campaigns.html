@@ -1,0 +1,54 @@
+<app-page-header title="Campaigns" description="Create targeted promotions and measure what brings customers back.">
+  <button class="primary-button" type="button" (click)="openCreate()">＋ Create campaign</button>
+</app-page-header>
+
+<section class="statistics" aria-label="Campaign statistics">
+  <article><span class="stat-icon active">↗</span><div><small>Active campaigns</small><b>{{ activeCount() }}</b><p>{{ campaignData.campaigns().length }} campaigns created</p></div></article>
+  <article><span class="stat-icon sent">✉</span><div><small>Messages sent</small><b>{{ totalSent().toLocaleString() }}</b><p>Across all campaigns</p></div></article>
+  <article><span class="stat-icon conversion">⌁</span><div><small>Conversion rate</small><b>{{ averageConversion().toFixed(1) }}%</b><p>{{ totalConversions().toLocaleString() }} customer actions</p></div></article>
+  <article><span class="stat-icon revenue">$</span><div><small>Revenue influenced</small><b>${{ revenueInfluenced().toLocaleString() }}</b><p>Attributed campaign revenue</p></div></article>
+</section>
+
+<section class="management">
+  <header class="toolbar">
+    <label class="search"><span>⌕</span><input type="search" placeholder="Search campaigns..." [ngModel]="search()" (ngModelChange)="search.set($event)" />@if (search()) { <button type="button" aria-label="Clear search" (click)="search.set('')">×</button> }</label>
+    <select aria-label="Filter campaigns by type" [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">@for (type of types; track type) { <option [value]="type">{{ type }}</option> }</select>
+    <select aria-label="Filter campaigns by status" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">@for (status of statuses; track status) { <option [value]="status">{{ status }}</option> }</select>
+  </header>
+
+  @if (campaigns().length) {
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Campaign</th><th>Audience</th><th>Schedule</th><th>Performance</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          @for (campaign of campaigns(); track campaign.id) {
+            <tr>
+              <td><span class="campaign-name" [class]="campaign.type.toLowerCase().replaceAll(' ', '-')"><i>{{ typeIcon(campaign.type) }}</i><span><b>{{ campaign.name }}</b><small>{{ campaign.type }}</small></span></span></td>
+              <td><span class="audience"><i>♙</i>{{ campaign.audience }}</span></td>
+              <td><span class="schedule"><b>{{ formatSchedule(campaign) }}</b><small>Created {{ campaign.createdAt }}</small></span></td>
+              <td>
+                @if (campaign.sent) {
+                  <div class="performance"><span><small>Sent</small><b>{{ campaign.sent.toLocaleString() }}</b></span><span><small>Open</small><b>{{ openRate(campaign).toFixed(1) }}%</b></span><span><small>Converted</small><b>{{ conversionRate(campaign).toFixed(1) }}%</b></span></div>
+                } @else { <span class="no-data">No performance data yet</span> }
+              </td>
+              <td><label class="status-control"><span [class]="campaign.status.toLowerCase()">{{ campaign.status }}</span><input type="checkbox" [checked]="campaign.status === 'Active'" [disabled]="campaign.status === 'Completed'" (change)="toggleCampaign(campaign)" /><i></i></label></td>
+              <td><div class="actions"><button type="button" title="Edit campaign" (click)="openEdit(campaign)">✎</button><button class="delete" type="button" title="Delete campaign" (click)="deletingId.set(campaign.id)">⌫</button></div></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer><span>Showing {{ campaigns().length }} of {{ campaignData.campaigns().length }} campaigns</span><button type="button" (click)="openCreate()">＋ New campaign</button></footer>
+  } @else {
+    <div class="empty"><span>↗</span><h2>No campaigns found</h2><p>Adjust your filters or create a campaign to start engaging customers.</p><div><button type="button" (click)="clearFilters()">Clear filters</button><button class="primary-button" type="button" (click)="openCreate()">＋ Create campaign</button></div></div>
+  }
+</section>
+
+<section class="insight">
+  <span>✦</span><div><b>Campaign performance insight</b><p>Birthday rewards currently convert 2.8× better than general promotions. Consider expanding birthday audience campaigns.</p></div><button type="button">View analytics →</button>
+</section>
+
+@if (formOpen()) { <app-campaign-form-modal [campaign]="editingCampaign()" (closed)="closeForm()" (saved)="saveCampaign($event)" /> }
+@if (deletingCampaign(); as campaign) {
+  <app-confirmation-dialog title="Delete this campaign?" [message]="'“' + campaign.name + '” and its performance history will be permanently removed.'" confirmLabel="Delete campaign" (closed)="deletingId.set(null)" (confirmed)="confirmDelete()" />
+}

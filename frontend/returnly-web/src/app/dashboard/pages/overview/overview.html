@@ -1,0 +1,47 @@
+<app-page-header title="Good morning, Adam" description="Here’s what’s happening at Solé & Maple today.">
+  <button class="period">Last 30 days <span>⌄</span></button>
+</app-page-header>
+
+<section class="kpis">
+  <app-kpi-card icon="♙" value="2,847" label="Total Customers" trend="+12.5%" detail="324 new customers this month" />
+  <app-kpi-card icon="↗" value="186" label="Visits Today" trend="+8.2%" detail="Compared to 172 yesterday" />
+  <app-kpi-card icon="◇" value="1,204" label="Rewards Redeemed" trend="+16.8%" detail="184 redemptions this month" />
+  <app-kpi-card icon="$" value="$18,420" label="Revenue Influenced" trend="+21.4%" detail="32% of total monthly revenue" />
+</section>
+
+<section class="charts">
+  <article class="panel visits">
+    <header><span><b>Customer visits</b><small>Daily customer visits over time</small></span><div class="legend"><i></i> This period <i></i> Previous</div></header>
+    <div class="chart-area">
+      <div class="y-axis"><span>300</span><span>200</span><span>100</span><span>0</span></div>
+      <div class="bar-chart">
+        @for (height of chartBars; track $index) { <div><i [style.height.%]="height"></i><b [style.height.%]="height - 18"></b></div> }
+      </div>
+    </div>
+    <div class="x-axis"><span>Jun 1</span><span>Jun 8</span><span>Jun 15</span><span>Jun 22</span><span>Jun 30</span></div>
+  </article>
+  <article class="panel redemption">
+    <header><span><b>Reward redemptions</b><small>By reward type</small></span><button>•••</button></header>
+    <div class="donut"><span><b>1,204</b><small>Total</small></span></div>
+    <ul><li><i></i><span>Free coffee</span><b>42%</b></li><li><i></i><span>Discounts</span><b>31%</b></li><li><i></i><span>Free dessert</span><b>18%</b></li><li><i></i><span>Other</span><b>9%</b></li></ul>
+  </article>
+</section>
+
+<section class="bottom-grid">
+  <article class="panel activity">
+    <header><span><b>Recent activity</b><small>Latest customer interactions</small></span><a href="/dashboard/customers">View all →</a></header>
+    <div class="activity-head"><span>Customer</span><span>Activity</span><span>Time</span></div>
+    @for (item of data.activities; track item.customer) {
+      <div class="activity-row">
+        <span class="person"><i [style.background]="item.tone">{{ item.initials }}</i><b>{{ item.customer }}</b></span>
+        <span><b>{{ item.action }}</b><small>{{ item.detail }}</small></span><time>{{ item.time }}</time>
+      </div>
+    }
+  </article>
+  <article class="panel top-rewards">
+    <header><span><b>Top rewards</b><small>Most redeemed this month</small></span><a href="/dashboard/rewards">Manage →</a></header>
+    @for (reward of data.rewards().slice(0, 3); track reward.id) {
+      <div class="reward"><i>{{ reward.icon }}</i><span><b>{{ reward.name }}</b><small>{{ reward.points }} points</small></span><strong>{{ reward.redemptions }}</strong></div>
+    }
+  </article>
+</section>

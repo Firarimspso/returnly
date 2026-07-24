@@ -1,0 +1,98 @@
+<app-page-header title="Customers" description="Manage customer profiles, loyalty activity, and engagement.">
+  <button class="primary-button" type="button">＋ Add customer</button>
+</app-page-header>
+
+<section class="customer-summary" aria-label="Customer summary">
+  <article><span class="summary-icon all">♙</span><div><small>Total customers</small><b>{{ data.customers().length }}</b></div></article>
+  <article><span class="summary-icon active">✓</span><div><small>Active</small><b>{{ activeCount() }}</b></div></article>
+  <article><span class="summary-icon vip">★</span><div><small>VIP members</small><b>{{ vipCount() }}</b></div></article>
+  <article><span class="summary-icon new">＋</span><div><small>New customers</small><b>{{ newCount() }}</b></div></article>
+</section>
+
+<section class="customer-panel">
+  <header class="toolbar">
+    <label class="search-field">
+      <span>⌕</span>
+      <input
+        type="search"
+        placeholder="Search by name, phone, or email..."
+        [ngModel]="search()"
+        (ngModelChange)="updateSearch($event)"
+      />
+      @if (search()) { <button type="button" aria-label="Clear search" (click)="updateSearch('')">×</button> }
+    </label>
+    <div class="filters" aria-label="Filter customers by status">
+      @for (option of statusOptions; track option) {
+        <button type="button" [class.active]="status() === option" (click)="setStatus(option)">
+          {{ option }}
+          @if (option === 'VIP') { <span>★</span> }
+        </button>
+      }
+    </div>
+    <button class="export-button" type="button">⇩ Export</button>
+  </header>
+
+  @if (pagedCustomers().length) {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="avatar-column"><span class="sr-only">Avatar</span></th>
+            <th><button type="button" (click)="sortBy('name')">Full Name <i>{{ sortIcon('name') }}</i></button></th>
+            <th><button type="button" (click)="sortBy('phone')">Phone Number <i>{{ sortIcon('phone') }}</i></button></th>
+            <th><button type="button" (click)="sortBy('email')">Email <i>{{ sortIcon('email') }}</i></button></th>
+            <th><button type="button" (click)="sortBy('points')">Points <i>{{ sortIcon('points') }}</i></button></th>
+            <th><button type="button" (click)="sortBy('visits')">Visits <i>{{ sortIcon('visits') }}</i></button></th>
+            <th><button type="button" (click)="sortBy('lastVisitTimestamp')">Last Visit <i>{{ sortIcon('lastVisitTimestamp') }}</i></button></th>
+            <th><button type="button" (click)="sortBy('status')">Status <i>{{ sortIcon('status') }}</i></button></th>
+            <th><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (customer of pagedCustomers(); track customer.id) {
+            <tr tabindex="0" (click)="openCustomer(customer)" (keydown.enter)="openCustomer(customer)">
+              <td><span class="avatar" [style.background]="customer.color">{{ customer.initials }}</span></td>
+              <td><b class="customer-name">{{ customer.name }}</b></td>
+              <td>{{ customer.phone }}</td>
+              <td><a [href]="'mailto:' + customer.email" (click)="$event.stopPropagation()">{{ customer.email }}</a></td>
+              <td><strong class="points">✦ {{ customer.points.toLocaleString() }}</strong></td>
+              <td>{{ customer.visits }}</td>
+              <td>{{ customer.lastVisit }}</td>
+              <td><span class="status" [class]="customer.status.toLowerCase()">{{ customer.status }}</span></td>
+              <td><button class="more-button" type="button" [attr.aria-label]="'View ' + customer.name" (click)="$event.stopPropagation(); openCustomer(customer)">•••</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="pagination">
+      <span>Showing {{ firstResult() }}–{{ lastResult() }} of {{ customers().length }} customers</span>
+      <nav aria-label="Customer table pagination">
+        <button type="button" aria-label="Previous page" [disabled]="page() === 1" (click)="goToPage(page() - 1)">‹</button>
+        @for (pageNumber of visiblePages(); track pageNumber) {
+          <button type="button" [class.current]="page() === pageNumber" [attr.aria-current]="page() === pageNumber ? 'page' : null" (click)="goToPage(pageNumber)">{{ pageNumber }}</button>
+        }
+        <button type="button" aria-label="Next page" [disabled]="page() === totalPages()" (click)="goToPage(page() + 1)">›</button>
+      </nav>
+    </footer>
+  } @else {
+    <div class="empty-state">
+      <span>♙</span><h2>No customers found</h2>
+      <p>No profiles match your current search and status filter.</p>
+      <button type="button" (click)="clearFilters()">Clear all filters</button>
+    </div>
+  }
+</section>
+
+@if (selectedCustomer(); as customer) {
+  <app-customer-drawer [customer]="customer" [escapeEnabled]="!actionMode()" (closed)="selectedCustomerId.set(null)" (actionSelected)="openAction($event)" />
+  @if (actionMode(); as mode) {
+    <app-customer-action-modal
+      [mode]="mode"
+      [customer]="customer"
+      [rewards]="data.rewards()"
+      (closed)="actionMode.set(null)"
+      (submitted)="handleAction($event)"
+    />
+  }
+}

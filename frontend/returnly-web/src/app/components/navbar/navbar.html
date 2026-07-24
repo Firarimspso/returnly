@@ -1,0 +1,30 @@
+<header class="navbar">
+  <div class="container nav-inner">
+    <a class="brand" href="#top" aria-label="Returnly home">
+      <span class="brand-mark"><span></span></span>
+      <span>Returnly</span>
+    </a>
+
+    <button
+      class="menu-button"
+      type="button"
+      aria-label="Toggle navigation"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="toggleMenu()"
+    >
+      <span></span><span></span>
+    </button>
+
+    <div class="nav-content" [class.open]="menuOpen()">
+      <nav aria-label="Main navigation">
+        <a href="#features" (click)="closeMenu()">Features</a>
+        <a href="#pricing" (click)="closeMenu()">Pricing</a>
+        <a href="#restaurants" (click)="closeMenu()">Restaurants</a>
+      </nav>
+      <div class="actions">
+        <a class="login" href="#login">Log in</a>
+        <a class="btn btn-primary" href="#get-started">Get Started</a>
+      </div>
+    </div>
+  </div>
+</header>

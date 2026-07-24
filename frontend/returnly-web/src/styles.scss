@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
+
+:root {
+  --ink: #161422;
+  --muted: #686579;
+  --violet: #6952e8;
+  --violet-dark: #5039ce;
+  --violet-soft: #f0edff;
+  --surface: #ffffff;
+  --surface-soft: #f8f7fb;
+  --line: #e9e7ef;
+  --container: 1180px;
+  --shadow: 0 20px 60px rgba(33, 24, 75, 0.09);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--surface);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.container {
+  width: min(calc(100% - 48px), var(--container));
+  margin-inline: auto;
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  color: var(--violet);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.section-heading {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+}
+
+.section-copy {
+  max-width: 590px;
+  margin: 18px auto 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--violet);
+  box-shadow: 0 10px 24px rgba(105, 82, 232, 0.24);
+}
+
+.btn-primary:hover {
+  background: var(--violet-dark);
+  box-shadow: 0 14px 28px rgba(105, 82, 232, 0.3);
+}
+
+.btn-secondary {
+  border-color: var(--line);
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 5px 16px rgba(26, 22, 45, 0.05);
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: min(calc(100% - 32px), var(--container));
+  }
+}

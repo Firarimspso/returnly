@@ -1,0 +1,54 @@
+<app-page-header title="QR Codes" description="Create, track, and manage every loyalty touchpoint.">
+  <button class="primary-button" type="button" (click)="openCreate()">＋ Create QR code</button>
+</app-page-header>
+
+<section class="statistics" aria-label="QR code statistics">
+  <article><span class="stat-icon active">⌗</span><div><small>Active QR codes</small><b>{{ activeCount() }}</b><p>of {{ qrData.qrCodes().length }} total codes</p></div></article>
+  <article><span class="stat-icon scans">↗</span><div><small>Total scans</small><b>{{ totalScans().toLocaleString() }}</b><p>All-time QR engagement</p></div></article>
+  <article><span class="stat-icon today">◷</span><div><small>Scans today</small><b>{{ scansToday().toLocaleString() }}</b><p>Across active QR codes</p></div></article>
+  <article><span class="stat-icon conversion">⌁</span><div><small>Conversion rate</small><b>{{ conversionRate().toFixed(1) }}%</b><p>Scans converted to loyalty</p></div></article>
+</section>
+
+<div class="module-layout">
+  <section class="management">
+    <header class="toolbar">
+      <label class="search"><span>⌕</span><input type="search" placeholder="Search QR codes..." [ngModel]="search()" (ngModelChange)="search.set($event)" />@if (search()) { <button type="button" aria-label="Clear search" (click)="search.set('')">×</button> }</label>
+      <select aria-label="Filter QR codes by type" [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">@for (type of types; track type) { <option [value]="type">{{ type }}</option> }</select>
+      <select aria-label="Filter QR codes by status" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">@for (status of statuses; track status) { <option [value]="status">{{ status }}</option> }</select>
+    </header>
+
+    @if (qrCodes().length) {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Total Scans</th><th>Last Scan</th><th>Actions</th></tr></thead>
+          <tbody>
+            @for (qrCode of qrCodes(); track qrCode.id) {
+              <tr [class.selected]="selectedQr()?.id === qrCode.id" (click)="selectedId.set(qrCode.id)">
+                <td><span class="qr-name"><i>⌗</i><span><b>{{ qrCode.name }}</b><small>{{ qrCode.code }}</small></span></span></td>
+                <td><span class="type" [class]="qrCode.type.toLowerCase()">{{ qrCode.type }}</span></td>
+                <td><label class="status-toggle" (click)="$event.stopPropagation()"><span [class.active]="qrCode.status === 'Active'">{{ qrCode.status }}</span><input type="checkbox" [checked]="qrCode.status === 'Active'" (change)="qrData.setStatus(qrCode.id, qrCode.status === 'Active' ? 'Inactive' : 'Active')" /><i></i></label></td>
+                <td><strong>{{ qrCode.totalScans.toLocaleString() }}</strong><small class="today-count">+{{ qrCode.scansToday }} today</small></td>
+                <td>{{ qrCode.lastScan }}</td>
+                <td><div class="actions" (click)="$event.stopPropagation()"><button type="button" title="Download QR" (click)="downloadQr(qrCode)">⇩</button><button type="button" title="Print QR" (click)="printQr(qrCode)">▣</button><button type="button" title="Edit QR" (click)="openEdit(qrCode)">✎</button><button class="delete" type="button" title="Delete QR" (click)="deletingId.set(qrCode.id)">⌫</button></div></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer><span>Showing {{ qrCodes().length }} of {{ qrData.qrCodes().length }} QR codes</span><button type="button" (click)="openCreate()">＋ New QR code</button></footer>
+    } @else {
+      <div class="empty"><span>⌗</span><h2>No QR codes found</h2><p>Adjust your filters or create a new trackable QR code.</p><div><button type="button" (click)="clearFilters()">Clear filters</button><button class="primary-button" type="button" (click)="openCreate()">＋ Create QR</button></div></div>
+    }
+  </section>
+
+  @if (selectedQr(); as qrCode) {
+    <app-qr-preview [qrCode]="qrCode" (edit)="openEdit(qrCode)" (download)="downloadQr(qrCode)" (print)="printQr(qrCode)" />
+  } @else {
+    <aside class="no-preview"><span>⌗</span><p>Create a QR code to see its preview.</p></aside>
+  }
+</div>
+
+@if (formOpen()) { <app-qr-form-modal [qrCode]="editingQr()" (closed)="closeForm()" (saved)="saveQrCode($event)" /> }
+@if (deletingQr(); as qrCode) {
+  <app-confirmation-dialog title="Delete this QR code?" [message]="'“' + qrCode.name + '” will stop working and its scan history will be removed.'" confirmLabel="Delete QR code" (closed)="deletingId.set(null)" (confirmed)="confirmDelete()" />
+}
