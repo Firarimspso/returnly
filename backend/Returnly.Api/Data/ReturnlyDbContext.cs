@@ -9,6 +9,7 @@ public sealed class ReturnlyDbContext(DbContextOptions<ReturnlyDbContext> option
     public DbSet<User> Users => Set<User>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Reward> Rewards => Set<Reward>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

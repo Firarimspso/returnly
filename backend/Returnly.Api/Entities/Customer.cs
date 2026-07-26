@@ -17,6 +17,7 @@ public sealed class Customer : BaseEntity, ITenantEntity
     public int RewardsRedeemed { get; set; }
 
     public Restaurant Restaurant { get; set; } = null!;
+    public ICollection<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
 }
 
 public enum CustomerStatus
