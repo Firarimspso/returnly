@@ -44,6 +44,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<IRewardRepository, RewardRepository>();
+        services.AddScoped<IRewardService, RewardService>();
         return services;
     }
 
