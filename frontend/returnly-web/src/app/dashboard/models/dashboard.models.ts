@@ -37,6 +37,7 @@ export interface Customer {
 
 export interface Reward {
   id: number;
+  apiId?: string;
   name: string;
   description: string;
   points: number;

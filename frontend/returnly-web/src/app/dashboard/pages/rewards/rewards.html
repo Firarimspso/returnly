@@ -36,7 +36,7 @@
             <header>
               <span class="reward-icon">{{ reward.icon }}</span>
               <label class="toggle" [attr.aria-label]="(reward.active ? 'Deactivate ' : 'Activate ') + reward.name">
-                <input type="checkbox" [checked]="reward.active" (change)="data.setRewardActive(reward.id, !reward.active)" /><i></i>
+                <input type="checkbox" [checked]="reward.active" (change)="setRewardActive(reward, !reward.active)" /><i></i>
               </label>
             </header>
             <div class="category-row"><span>{{ reward.category }}</span><i [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</i></div>
@@ -56,7 +56,7 @@
               <tr>
                 <td><span class="table-reward" [style.--reward-color]="reward.color"><i>{{ reward.icon }}</i><span><b>{{ reward.name }}</b><small>{{ reward.description }}</small></span></span></td>
                 <td><span class="category">{{ reward.category }}</span></td><td><strong class="point-value">✦ {{ reward.points.toLocaleString() }}</strong></td><td>{{ reward.redemptions.toLocaleString() }}</td>
-                <td><label class="table-status"><span [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</span><input type="checkbox" [checked]="reward.active" (change)="data.setRewardActive(reward.id, !reward.active)" /><i></i></label></td>
+                <td><label class="table-status"><span [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</span><input type="checkbox" [checked]="reward.active" (change)="setRewardActive(reward, !reward.active)" /><i></i></label></td>
                 <td>{{ reward.createdAt }}</td><td><div class="row-actions"><button type="button" (click)="openEdit(reward)">✎</button><button class="delete" type="button" (click)="deletingRewardId.set(reward.id)">⌫</button></div></td>
               </tr>
             }
