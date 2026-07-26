@@ -1,6 +1,6 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject, isDevMode } from '@angular/core';
-import { Observable, switchMap, tap, throwError } from 'rxjs';
+import { Observable, catchError, switchMap, tap, throwError } from 'rxjs';
 import {
   ApiResponse,
   CustomerDto,
@@ -53,13 +53,28 @@ export class CustomerApiService {
   ): Observable<T> {
     const storedToken = this.accessToken();
     if (storedToken) {
-      return request(this.bearerHeaders(storedToken));
+      return request(this.bearerHeaders(storedToken)).pipe(
+        catchError((error: unknown) => {
+          if (isDevMode() && error instanceof HttpErrorResponse && error.status === 401) {
+            this.clearAccessToken();
+            return this.developmentLoginAndRetry(request);
+          }
+
+          return throwError(() => error);
+        }),
+      );
     }
 
     if (!isDevMode()) {
       return throwError(() => new Error('No Returnly access token is available.'));
     }
 
+    return this.developmentLoginAndRetry(request);
+  }
+
+  private developmentLoginAndRetry<T>(
+    request: (headers: HttpHeaders) => Observable<T>,
+  ): Observable<T> {
     return this.http.post<LoginApiResponse>(this.loginUrl, {
       email: 'admin@solemaple.com',
       password: 'ReturnlyDemo123!',
@@ -67,6 +82,12 @@ export class CustomerApiService {
       tap((response) => globalThis.localStorage?.setItem('returnly_token', response.data.token)),
       switchMap((response) => request(this.bearerHeaders(response.data.token))),
     );
+  }
+
+  private clearAccessToken(): void {
+    globalThis.localStorage?.removeItem('returnly_token');
+    globalThis.sessionStorage?.removeItem('returnly_token');
+    globalThis.localStorage?.removeItem('token');
   }
 
   private accessToken(): string | null {
