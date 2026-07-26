@@ -3,7 +3,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { CustomerDto, CustomerUpsertRequest } from '../../../core/models/customer.model';
+import {
+  CreatePointTransactionRequest,
+  PointTransactionDto,
+} from '../../../core/models/point-transaction.model';
+import { RewardDto } from '../../../core/models/reward.model';
 import { CustomerApiService } from '../../../core/services/customer-api.service';
+import { PointTransactionApiService } from '../../../core/services/point-transaction-api.service';
+import { RewardApiService } from '../../../core/services/reward-api.service';
 import {
   CustomerActionModalComponent,
   CustomerActionMode,
@@ -25,13 +32,12 @@ type SortDirection = 'asc' | 'desc';
 })
 export class CustomersPage {
   private readonly customerApi = inject(CustomerApiService);
+  private readonly pointTransactionApi = inject(PointTransactionApiService);
+  private readonly rewardApi = inject(RewardApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly customerRecords = signal<Customer[]>([]);
-  private readonly rewardRecords = signal<Reward[]>([
-    { id: 1, name: 'Free Specialty Coffee', description: 'Any hot or iced specialty drink', points: 500, active: true, icon: '☕', redemptions: 0, category: 'Drinks', createdAt: '', color: '#6952e8' },
-    { id: 2, name: 'Complimentary Dessert', description: 'Choose any dessert from the menu', points: 750, active: true, icon: '✦', redemptions: 0, category: 'Food', createdAt: '', color: '#d06e79' },
-    { id: 3, name: '20% Off Your Order', description: 'Valid on dine-in orders up to $100', points: 1000, active: true, icon: '%', redemptions: 0, category: 'Discount', createdAt: '', color: '#3b9470' },
-  ]);
+  private readonly transactionRecords = signal<PointTransactionDto[]>([]);
+  private readonly rewardRecords = signal<Reward[]>([]);
 
   protected readonly data = {
     customers: this.customerRecords.asReadonly(),
@@ -87,6 +93,8 @@ export class CustomersPage {
 
   constructor() {
     this.loadCustomers();
+    this.loadTransactions();
+    this.loadRewards();
   }
 
   protected updateSearch(value: string): void {
@@ -136,37 +144,16 @@ export class CustomersPage {
     }
 
     if (result.mode === 'points') {
-      this.updateLocalCustomer(customer.id, (current) => ({
-        ...current,
-        points: current.points + result.points,
-        lifetimePoints: current.lifetimePoints + result.points,
-        activity: [{
-          title: `Added ${result.points.toLocaleString()} points`,
-          description: result.note || 'Manual adjustment',
-          date: 'Just now',
-          icon: '✦',
-        }, ...current.activity],
-      }));
+      this.earnPoints(customer, result);
+      return;
     }
 
     if (result.mode === 'reward') {
       const reward = this.rewardRecords().find((item) => item.id === result.rewardId);
       if (!reward || customer.points < reward.points) return;
-      this.updateLocalCustomer(customer.id, (current) => ({
-        ...current,
-        points: current.points - reward.points,
-        rewardsRedeemed: current.rewardsRedeemed + 1,
-        favoriteReward: reward.name,
-        activity: [{
-          title: `Redeemed ${reward.name}`,
-          description: `Used ${reward.points.toLocaleString()} points`,
-          date: 'Just now',
-          icon: '◇',
-        }, ...current.activity],
-      }));
+      this.redeemReward(customer, reward);
+      return;
     }
-
-    this.actionMode.set(null);
   }
 
   protected clearFilters(): void {
@@ -185,11 +172,106 @@ export class CustomersPage {
         finalize(() => this.loading.set(false)),
       )
       .subscribe({
-        next: (response) => this.customerRecords.set(response.data.items.map((customer) => this.toViewCustomer(customer))),
+        next: (response) => {
+          this.customerRecords.set(
+            response.data.items.map((customer) => this.toViewCustomer(customer)),
+          );
+        },
         error: () => {
           this.customerRecords.set([]);
           this.errorMessage.set('Customers could not be loaded. Check the API connection and sign in again.');
         },
+      });
+  }
+
+  private loadTransactions(): void {
+    this.pointTransactionApi.getTransactions({ page: 1, pageSize: 100 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.transactionRecords.set(response.data.items);
+          this.applyTransactionActivity();
+        },
+        error: () => this.errorMessage.set('Point activity could not be loaded. Please try again.'),
+      });
+  }
+
+  private loadRewards(): void {
+    this.rewardApi.getRewards({ page: 1, pageSize: 100, isActive: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.rewardRecords.set(
+            response.data.items
+              .filter((reward) => reward.isActive)
+              .map((reward) => this.toViewReward(reward)),
+          );
+        },
+        error: () => this.errorMessage.set('Rewards could not be loaded. Please try again.'),
+      });
+  }
+
+  private earnPoints(
+    customer: Customer,
+    result: Extract<CustomerActionResult, { mode: 'points' }>,
+  ): void {
+    if (!customer.apiId) return;
+
+    const request: CreatePointTransactionRequest = {
+      customerId: customer.apiId,
+      points: result.points,
+      reason: result.note.trim() || 'Manual adjustment',
+    };
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.pointTransactionApi.earnPoints(request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          this.prependTransaction(response.data);
+          this.updateLocalCustomer(customer.id, (current) => ({
+            ...current,
+            points: response.data.balanceAfter,
+            lifetimePoints: current.lifetimePoints + response.data.points,
+            activity: [this.toTimelineItem(response.data), ...current.activity],
+          }));
+          this.actionMode.set(null);
+        },
+        error: () => this.errorMessage.set('Points could not be added. Please try again.'),
+      });
+  }
+
+  private redeemReward(customer: Customer, reward: Reward): void {
+    if (!customer.apiId) return;
+
+    const request: CreatePointTransactionRequest = {
+      customerId: customer.apiId,
+      points: reward.points,
+      reason: `Redeemed ${reward.name}`,
+    };
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.pointTransactionApi.redeemPoints(request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          this.prependTransaction(response.data);
+          this.updateLocalCustomer(customer.id, (current) => ({
+            ...current,
+            points: response.data.balanceAfter,
+            rewardsRedeemed: current.rewardsRedeemed + 1,
+            favoriteReward: reward.name,
+            activity: [this.toTimelineItem(response.data), ...current.activity],
+          }));
+          this.actionMode.set(null);
+        },
+        error: () => this.errorMessage.set('The reward could not be redeemed. Please try again.'),
       });
   }
 
@@ -250,12 +332,68 @@ export class CustomersPage {
       status: customer.status === 'Vip' ? 'VIP' : customer.status === 'Inactive' ? 'Active' : customer.status,
       initials: `${customer.firstName[0] ?? ''}${customer.lastName[0] ?? ''}`.toUpperCase(),
       color: this.avatarColor(customer.id),
-      activity: lastVisit ? [{
+      activity: [
+        ...this.transactionRecords()
+          .filter((transaction) => transaction.customerId === customer.id)
+          .map((transaction) => this.toTimelineItem(transaction)),
+        ...(lastVisit ? [{
         title: 'Visited your restaurant',
         description: `Visit #${customer.totalVisits}`,
         date: new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(lastVisit),
         icon: '⌂',
-      }] : [],
+        }] : []),
+      ],
+    };
+  }
+
+  private applyTransactionActivity(): void {
+    const transactions = this.transactionRecords();
+    this.customerRecords.update((customers) =>
+      customers.map((customer) => ({
+        ...customer,
+        activity: [
+          ...transactions
+            .filter((transaction) => transaction.customerId === customer.apiId)
+            .map((transaction) => this.toTimelineItem(transaction)),
+          ...customer.activity.filter((item) => item.icon === '⌂'),
+        ],
+      })),
+    );
+  }
+
+  private prependTransaction(transaction: PointTransactionDto): void {
+    this.transactionRecords.update((transactions) => [transaction, ...transactions]);
+  }
+
+  private toViewReward(reward: RewardDto): Reward {
+    return {
+      id: this.numericId(reward.id),
+      apiId: reward.id,
+      name: reward.name,
+      description: reward.description,
+      points: reward.requiredPoints,
+      active: reward.isActive,
+      icon: reward.icon || '◇',
+      redemptions: reward.totalRedemptions,
+      category: reward.category,
+      createdAt: reward.createdAt,
+      color: reward.color || '#6952e8',
+    };
+  }
+
+  private toTimelineItem(transaction: PointTransactionDto) {
+    return {
+      title: transaction.type === 'Earn'
+        ? `Added ${transaction.points.toLocaleString()} points`
+        : transaction.reason,
+      description: transaction.type === 'Earn'
+        ? transaction.reason
+        : `Used ${transaction.points.toLocaleString()} points`,
+      date: new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(transaction.createdAt)),
+      icon: transaction.type === 'Earn' ? '✦' : '◇',
     };
   }
 

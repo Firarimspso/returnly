@@ -48,6 +48,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRewardService, RewardService>();
         services.AddScoped<IPointTransactionRepository, PointTransactionRepository>();
         services.AddScoped<IPointTransactionService, PointTransactionService>();
+        services.AddScoped<IDashboardAnalyticsRepository, DashboardAnalyticsRepository>();
+        services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
         return services;
     }
 
