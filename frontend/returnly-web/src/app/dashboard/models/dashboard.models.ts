@@ -17,6 +17,7 @@ export interface CustomerUpdate {
 
 export interface Customer {
   id: number;
+  apiId?: string;
   name: string;
   phone: string;
   email: string;

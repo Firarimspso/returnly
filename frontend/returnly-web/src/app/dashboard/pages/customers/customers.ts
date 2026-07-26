@@ -1,5 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
+import { CustomerDto, CustomerUpsertRequest } from '../../../core/models/customer.model';
+import { CustomerApiService } from '../../../core/services/customer-api.service';
 import {
   CustomerActionModalComponent,
   CustomerActionMode,
@@ -7,8 +11,7 @@ import {
 } from '../../components/customer-action-modal/customer-action-modal';
 import { CustomerDrawerComponent } from '../../components/customer-drawer/customer-drawer';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
-import { Customer, CustomerStatus } from '../../models/dashboard.models';
-import { DashboardDataService } from '../../services/dashboard-data';
+import { Customer, CustomerStatus, Reward } from '../../models/dashboard.models';
 
 type CustomerFilter = 'All' | CustomerStatus;
 type SortKey = 'name' | 'phone' | 'email' | 'points' | 'visits' | 'lastVisitTimestamp' | 'status';
@@ -21,8 +24,21 @@ type SortDirection = 'asc' | 'desc';
   styleUrl: './customers.scss',
 })
 export class CustomersPage {
-  protected readonly data = inject(DashboardDataService);
+  private readonly customerApi = inject(CustomerApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly customerRecords = signal<Customer[]>([]);
+  private readonly rewardRecords = signal<Reward[]>([
+    { id: 1, name: 'Free Specialty Coffee', description: 'Any hot or iced specialty drink', points: 500, active: true, icon: '☕', redemptions: 0, category: 'Drinks', createdAt: '', color: '#6952e8' },
+    { id: 2, name: 'Complimentary Dessert', description: 'Choose any dessert from the menu', points: 750, active: true, icon: '✦', redemptions: 0, category: 'Food', createdAt: '', color: '#d06e79' },
+    { id: 3, name: '20% Off Your Order', description: 'Valid on dine-in orders up to $100', points: 1000, active: true, icon: '%', redemptions: 0, category: 'Discount', createdAt: '', color: '#3b9470' },
+  ]);
 
+  protected readonly data = {
+    customers: this.customerRecords.asReadonly(),
+    rewards: this.rewardRecords.asReadonly(),
+  };
+  protected readonly loading = signal(true);
+  protected readonly errorMessage = signal<string | null>(null);
   protected readonly search = signal('');
   protected readonly status = signal<CustomerFilter>('All');
   protected readonly sortKey = signal<SortKey>('lastVisitTimestamp');
@@ -69,6 +85,10 @@ export class CustomersPage {
     this.data.customers().find((customer) => customer.id === this.selectedCustomerId()) ?? null,
   );
 
+  constructor() {
+    this.loadCustomers();
+  }
+
   protected updateSearch(value: string): void {
     this.search.set(value);
     this.page.set(1);
@@ -107,20 +127,45 @@ export class CustomersPage {
   }
 
   protected handleAction(result: CustomerActionResult): void {
-    const customerId = this.selectedCustomerId();
-    if (customerId === null) return;
+    const customer = this.selectedCustomer();
+    if (!customer) return;
 
-    switch (result.mode) {
-      case 'points':
-        this.data.addCustomerPoints(customerId, result.points, result.note);
-        break;
-      case 'reward':
-        if (!this.data.redeemCustomerReward(customerId, result.rewardId)) return;
-        break;
-      case 'edit':
-        this.data.updateCustomerProfile(customerId, result.update);
-        break;
+    if (result.mode === 'edit' && customer.apiId) {
+      this.updateCustomer(customer, result);
+      return;
     }
+
+    if (result.mode === 'points') {
+      this.updateLocalCustomer(customer.id, (current) => ({
+        ...current,
+        points: current.points + result.points,
+        lifetimePoints: current.lifetimePoints + result.points,
+        activity: [{
+          title: `Added ${result.points.toLocaleString()} points`,
+          description: result.note || 'Manual adjustment',
+          date: 'Just now',
+          icon: '✦',
+        }, ...current.activity],
+      }));
+    }
+
+    if (result.mode === 'reward') {
+      const reward = this.rewardRecords().find((item) => item.id === result.rewardId);
+      if (!reward || customer.points < reward.points) return;
+      this.updateLocalCustomer(customer.id, (current) => ({
+        ...current,
+        points: current.points - reward.points,
+        rewardsRedeemed: current.rewardsRedeemed + 1,
+        favoriteReward: reward.name,
+        activity: [{
+          title: `Redeemed ${reward.name}`,
+          description: `Used ${reward.points.toLocaleString()} points`,
+          date: 'Just now',
+          icon: '◇',
+        }, ...current.activity],
+      }));
+    }
+
     this.actionMode.set(null);
   }
 
@@ -128,5 +173,104 @@ export class CustomersPage {
     this.search.set('');
     this.status.set('All');
     this.page.set(1);
+    if (this.errorMessage()) this.loadCustomers();
+  }
+
+  private loadCustomers(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.customerApi.getCustomers({ page: 1, pageSize: 100 })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (response) => this.customerRecords.set(response.data.items.map((customer) => this.toViewCustomer(customer))),
+        error: () => {
+          this.customerRecords.set([]);
+          this.errorMessage.set('Customers could not be loaded. Check the API connection and sign in again.');
+        },
+      });
+  }
+
+  private updateCustomer(customer: Customer, result: Extract<CustomerActionResult, { mode: 'edit' }>): void {
+    const apiId = customer.apiId;
+    if (!apiId) return;
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.customerApi.updateCustomer(apiId, this.toUpdateRequest(result))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          const updated = this.toViewCustomer(response.data);
+          this.customerRecords.update((customers) =>
+            customers.map((item) => item.apiId === apiId ? { ...updated, activity: item.activity } : item),
+          );
+          this.actionMode.set(null);
+        },
+        error: () => this.errorMessage.set('The customer could not be updated. Please try again.'),
+      });
+  }
+
+  private toUpdateRequest(result: Extract<CustomerActionResult, { mode: 'edit' }>): CustomerUpsertRequest {
+    const parts = result.update.name.trim().split(/\s+/);
+    return {
+      firstName: parts.shift() ?? '',
+      lastName: parts.join(' ') || '-',
+      email: result.update.email,
+      phoneNumber: result.update.phone,
+      birthday: result.update.birthday || null,
+      status: result.update.status === 'VIP' ? 'Vip' : result.update.status,
+    };
+  }
+
+  private toViewCustomer(customer: CustomerDto): Customer {
+    const lastVisit = customer.lastVisitAt ? new Date(customer.lastVisitAt) : null;
+    const name = customer.fullName || `${customer.firstName} ${customer.lastName}`;
+    return {
+      id: this.numericId(customer.id),
+      apiId: customer.id,
+      name,
+      phone: customer.phoneNumber,
+      email: customer.email,
+      birthday: customer.birthday ?? 'Not provided',
+      points: customer.currentPoints,
+      lifetimePoints: customer.lifetimePoints,
+      visits: customer.totalVisits,
+      lastVisit: lastVisit
+        ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(lastVisit)
+        : 'Never',
+      lastVisitTimestamp: lastVisit?.getTime() ?? 0,
+      favoriteReward: customer.favoriteReward ?? 'None yet',
+      rewardsRedeemed: customer.rewardsRedeemed,
+      status: customer.status === 'Vip' ? 'VIP' : customer.status === 'Inactive' ? 'Active' : customer.status,
+      initials: `${customer.firstName[0] ?? ''}${customer.lastName[0] ?? ''}`.toUpperCase(),
+      color: this.avatarColor(customer.id),
+      activity: lastVisit ? [{
+        title: 'Visited your restaurant',
+        description: `Visit #${customer.totalVisits}`,
+        date: new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(lastVisit),
+        icon: '⌂',
+      }] : [],
+    };
+  }
+
+  private updateLocalCustomer(id: number, updater: (customer: Customer) => Customer): void {
+    this.customerRecords.update((customers) =>
+      customers.map((customer) => customer.id === id ? updater(customer) : customer),
+    );
+  }
+
+  private numericId(id: string): number {
+    return [...id].reduce((hash, character) => ((hash * 31) + character.charCodeAt(0)) | 0, 7) >>> 0;
+  }
+
+  private avatarColor(id: string): string {
+    const colors = ['#7857d9', '#d56f66', '#3f9d7c', '#c48736', '#487abf', '#995fa7'];
+    return colors[this.numericId(id) % colors.length];
   }
 }
