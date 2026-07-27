@@ -36,5 +36,10 @@ public sealed class PointTransactionConfiguration : IEntityTypeConfiguration<Poi
             .WithMany(customer => customer.PointTransactions)
             .HasForeignKey(transaction => transaction.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(transaction => transaction.QrCode)
+            .WithMany(qrCode => qrCode.PointTransactions)
+            .HasForeignKey(transaction => transaction.QrCodeId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

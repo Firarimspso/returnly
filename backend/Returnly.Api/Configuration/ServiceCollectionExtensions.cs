@@ -50,6 +50,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPointTransactionService, PointTransactionService>();
         services.AddScoped<IDashboardAnalyticsRepository, DashboardAnalyticsRepository>();
         services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
+        services.AddScoped<IQrCodeRepository, QrCodeRepository>();
+        services.AddScoped<IQrCodeService, QrCodeService>();
         return services;
     }
 
@@ -107,6 +109,7 @@ public static class ServiceCollectionExtensions
                 Version = "v1",
                 Description = "Restaurant loyalty and rewards platform API.",
             });
+            options.SchemaFilter<CreateQrCodeRequestSchemaFilter>();
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -114,7 +117,7 @@ public static class ServiceCollectionExtensions
                 Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "Enter a valid JWT access token.",
+                Description = "Paste the JWT token only. Do not include the 'Bearer ' prefix; Swagger adds it automatically.",
             });
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {

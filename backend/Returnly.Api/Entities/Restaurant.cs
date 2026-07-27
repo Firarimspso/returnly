@@ -15,4 +15,5 @@ public sealed class Restaurant : BaseEntity
     public ICollection<Customer> Customers { get; set; } = new List<Customer>();
     public ICollection<Reward> Rewards { get; set; } = new List<Reward>();
     public ICollection<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
+    public ICollection<QrCode> QrCodes { get; set; } = new List<QrCode>();
 }
