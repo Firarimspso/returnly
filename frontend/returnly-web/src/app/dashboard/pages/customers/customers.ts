@@ -17,6 +17,7 @@ import {
   CustomerActionResult,
 } from '../../components/customer-action-modal/customer-action-modal';
 import { CustomerDrawerComponent } from '../../components/customer-drawer/customer-drawer';
+import { CustomerFormModalComponent } from '../../components/customer-form-modal/customer-form-modal';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
 import { Customer, CustomerStatus, Reward } from '../../models/dashboard.models';
 
@@ -26,7 +27,13 @@ type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-customers-page',
-  imports: [FormsModule, PageHeaderComponent, CustomerDrawerComponent, CustomerActionModalComponent],
+  imports: [
+    FormsModule,
+    PageHeaderComponent,
+    CustomerDrawerComponent,
+    CustomerActionModalComponent,
+    CustomerFormModalComponent,
+  ],
   templateUrl: './customers.html',
   styleUrl: './customers.scss',
 })
@@ -53,6 +60,7 @@ export class CustomersPage {
   protected readonly pageSize = 8;
   protected readonly selectedCustomerId = signal<number | null>(null);
   protected readonly actionMode = signal<CustomerActionMode | null>(null);
+  protected readonly createModalOpen = signal(false);
 
   protected readonly statusOptions: CustomerFilter[] = ['All', 'Active', 'VIP', 'New'];
   protected readonly customers = computed(() => {
@@ -128,6 +136,31 @@ export class CustomersPage {
 
   protected openCustomer(customer: Customer): void {
     this.selectedCustomerId.set(customer.id);
+  }
+
+  protected openCreateCustomer(): void {
+    this.createModalOpen.set(true);
+  }
+
+  protected createCustomer(request: CustomerUpsertRequest): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.customerApi.createCustomer(request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          this.customerRecords.update((customers) => [
+            this.toViewCustomer(response.data),
+            ...customers,
+          ]);
+          this.page.set(1);
+          this.createModalOpen.set(false);
+        },
+        error: () => this.errorMessage.set('The customer could not be created. Please check the details and try again.'),
+      });
   }
 
   protected openAction(action: CustomerActionMode): void {
@@ -281,7 +314,7 @@ export class CustomersPage {
 
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.customerApi.updateCustomer(apiId, this.toUpdateRequest(result))
+    this.customerApi.updateCustomer(apiId, this.toUpdateRequest(customer, result))
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.loading.set(false)),
@@ -298,14 +331,17 @@ export class CustomersPage {
       });
   }
 
-  private toUpdateRequest(result: Extract<CustomerActionResult, { mode: 'edit' }>): CustomerUpsertRequest {
+  private toUpdateRequest(
+    customer: Customer,
+    result: Extract<CustomerActionResult, { mode: 'edit' }>,
+  ): CustomerUpsertRequest {
     const parts = result.update.name.trim().split(/\s+/);
     return {
       firstName: parts.shift() ?? '',
       lastName: parts.join(' ') || '-',
       email: result.update.email,
       phoneNumber: result.update.phone,
-      birthday: result.update.birthday || null,
+      birthday: customer.birthday === 'Not provided' ? null : customer.birthday,
       status: result.update.status === 'VIP' ? 'Vip' : result.update.status,
     };
   }

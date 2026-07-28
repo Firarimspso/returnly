@@ -1,5 +1,6 @@
 import { Component, computed, effect, HostListener, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { validateLebaneseMobile } from '../../../core/validation/lebanese-mobile';
 import { Customer, CustomerStatus, CustomerUpdate, Reward } from '../../models/dashboard.models';
 
 export type CustomerActionMode = 'points' | 'reward' | 'edit';
@@ -28,7 +29,6 @@ export class CustomerActionModalComponent {
   protected readonly name = signal('');
   protected readonly phone = signal('');
   protected readonly email = signal('');
-  protected readonly birthday = signal('');
   protected readonly status = signal<CustomerStatus>('Active');
   protected readonly error = signal('');
   protected readonly statusOptions: CustomerStatus[] = ['Active', 'VIP', 'New'];
@@ -41,6 +41,12 @@ export class CustomerActionModalComponent {
     const reward = this.selectedReward();
     return reward ? this.customer().points < reward.points : false;
   });
+  protected readonly phoneInvalid = computed(
+    () => validateLebaneseMobile(this.phone()).normalized === null,
+  );
+  protected readonly showPhoneError = computed(
+    () => this.mode() === 'edit' && this.phone().trim().length > 0 && this.phoneInvalid(),
+  );
 
   constructor() {
     effect(() => {
@@ -48,7 +54,6 @@ export class CustomerActionModalComponent {
       this.name.set(customer.name);
       this.phone.set(customer.phone);
       this.email.set(customer.email);
-      this.birthday.set(customer.birthday);
       this.status.set(customer.status);
     });
     effect(() => {
@@ -92,17 +97,21 @@ export class CustomerActionModalComponent {
       return;
     }
 
-    if (!this.name().trim() || !this.phone().trim() || !this.email().includes('@') || !this.birthday().trim()) {
-      this.error.set('Complete all fields and enter a valid email address.');
+    const phone = validateLebaneseMobile(this.phone());
+    if (!this.name().trim() || !this.email().includes('@')) {
+      this.error.set('Enter the customer’s name and a valid email address.');
+      return;
+    }
+    if (phone.error || !phone.normalized) {
+      this.error.set('Please enter a valid Lebanese mobile number.');
       return;
     }
     this.submitted.emit({
       mode: 'edit',
       update: {
         name: this.name().trim(),
-        phone: this.phone().trim(),
+        phone: phone.normalized,
         email: this.email().trim(),
-        birthday: this.birthday().trim(),
         status: this.status(),
       },
     });

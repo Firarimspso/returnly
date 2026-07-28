@@ -53,9 +53,8 @@
       @case ('edit') {
         <div class="form-grid">
           <label class="field wide"><span>Full name</span><input [ngModel]="name()" (ngModelChange)="name.set($event)" /></label>
-          <label class="field"><span>Phone number</span><input type="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" /></label>
+          <label class="field"><span>Phone number</span><input type="tel" inputmode="tel" autocomplete="tel" maxlength="12" pattern="\+?[0-9]*" placeholder="70123456 or +96170123456" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />@if (showPhoneError()) { <small class="field-error">Please enter a valid Lebanese mobile number.</small> }</label>
           <label class="field"><span>Email address</span><input type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" /></label>
-          <label class="field"><span>Birthday</span><input [ngModel]="birthday()" (ngModelChange)="birthday.set($event)" /></label>
           <label class="field"><span>Customer status</span><select [ngModel]="status()" (ngModelChange)="status.set($event)">@for (option of statusOptions; track option) { <option [value]="option">{{ option }}</option> }</select></label>
         </div>
       }
@@ -66,7 +65,7 @@
 
   <footer>
     <button class="cancel" type="button" (click)="closed.emit()">Cancel</button>
-    <button class="submit" type="button" [disabled]="mode() === 'reward' && insufficientPoints()" (click)="submit()">
+    <button class="submit" type="button" [disabled]="(mode() === 'reward' && insufficientPoints()) || (mode() === 'edit' && phoneInvalid())" (click)="submit()">
       @switch (mode()) {
         @case ('points') { Add Points }
         @case ('reward') { Redeem Reward }

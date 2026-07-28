@@ -1,5 +1,5 @@
 <app-page-header title="Customers" description="Manage customer profiles, loyalty activity, and engagement.">
-  <button class="primary-button" type="button">＋ Add customer</button>
+  <button class="primary-button" type="button" (click)="openCreateCustomer()">＋ Add customer</button>
 </app-page-header>
 
 <section class="customer-summary" aria-label="Customer summary">
@@ -83,6 +83,13 @@
     </div>
   }
 </section>
+
+@if (createModalOpen()) {
+  <app-customer-form-modal
+    (closed)="createModalOpen.set(false)"
+    (submitted)="createCustomer($event)"
+  />
+}
 
 @if (selectedCustomer(); as customer) {
   <app-customer-drawer [customer]="customer" [escapeEnabled]="!actionMode()" (closed)="selectedCustomerId.set(null)" (actionSelected)="openAction($event)" />

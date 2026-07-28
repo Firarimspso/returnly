@@ -5,6 +5,7 @@
 .modal header > span { flex: 1; }.modal h2 { margin: 1px 0 5px; font-family: 'Manrope',sans-serif; font-size: 15px; letter-spacing: -.03em; }.modal header p { margin: 0; color: #8d8994; font-size: 8px; }
 .close { width: 30px; height: 30px; border: 1px solid #e6e3e8; border-radius: 7px; color: #817c88; background: #fff; font-size: 18px; }
 .modal-body { padding: 19px 20px; }.customer-strip { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 11px; border-radius: 9px; background: #f8f7fa; }
+.field-error { color: #a84743; font-size: 7px; }
 .customer-strip > i { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 8px; color: #fff; font-size: 7px; font-style: normal; }.customer-strip span { display: flex; flex-direction: column; }.customer-strip b { font-size: 9px; }.customer-strip small { margin-top: 3px; color: #928d99; font-size: 7px; }
 .field { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }.field > span { color: #4b4651; font-size: 8px; font-weight: 700; }.field em { margin-left: 4px; color: #aaa5af; font-style: normal; font-weight: 400; }
 .field input,.field textarea,.field select { width: 100%; padding: 10px; border: 1px solid #dfdce3; border-radius: 8px; outline: 0; color: #423d48; background: #fff; font: inherit; font-size: 9px; }.field input:focus,.field textarea:focus,.field select:focus { border-color: #9b8aec; box-shadow: 0 0 0 3px #f0edff; }

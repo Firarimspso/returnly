@@ -9,6 +9,7 @@ import {
   PublicQrScanResultDto,
 } from '../core/models/qr-code.model';
 import { PublicQrApiService } from '../core/services/public-qr-api.service';
+import { validateLebaneseMobile } from '../core/validation/lebanese-mobile';
 
 type ScanState = 'validating' | 'identify' | 'submitting' | 'success' | 'error';
 
@@ -41,14 +42,14 @@ export class CustomerScanPage {
 
   protected submit(): void {
     const identifier = this.identifier().trim();
-    if (!this.isValidIdentifier(identifier)) {
-      this.errorMessage.set('Enter a valid email address or phone number.');
+    const normalizedIdentifier = this.normalizedIdentifier(identifier);
+    if (!normalizedIdentifier) {
       return;
     }
 
     this.state.set('submitting');
     this.errorMessage.set('');
-    this.publicQrApi.scan(this.token, { identifier })
+    this.publicQrApi.scan(this.token, { identifier: normalizedIdentifier })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
@@ -113,11 +114,21 @@ export class CustomerScanPage {
     this.showError('We could not connect to Returnly right now. Please try again shortly.');
   }
 
-  private isValidIdentifier(value: string): boolean {
+  private normalizedIdentifier(value: string): string | null {
     if (value.includes('@')) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return value;
+      }
+      this.errorMessage.set('Enter a valid email address.');
+      return null;
     }
-    return value.replace(/\D/g, '').length >= 7;
+
+    const phone = validateLebaneseMobile(value);
+    if (!phone.normalized) {
+      this.errorMessage.set(phone.error ?? 'Enter a valid Lebanese mobile number.');
+      return null;
+    }
+    return phone.normalized;
   }
 
   private showError(message: string): void {

@@ -11,7 +11,6 @@ export interface CustomerUpdate {
   name: string;
   phone: string;
   email: string;
-  birthday: string;
   status: CustomerStatus;
 }
 
