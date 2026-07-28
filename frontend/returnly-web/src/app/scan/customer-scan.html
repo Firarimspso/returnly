@@ -1,0 +1,66 @@
+<main class="scan-page">
+  <header class="brand">
+    <a href="/" aria-label="Returnly home"><span>R</span><b>Returnly</b></a>
+    <div><small>REWARDS AT</small><strong>{{ restaurantName() }}</strong></div>
+  </header>
+
+  <section class="scan-card">
+    @switch (state()) {
+      @case ('success') {
+        @if (result(); as scan) {
+          <div class="result success">
+            <div class="status-icon"><span>✓</span></div>
+            <p class="eyebrow">POINTS ADDED</p>
+            <h1>You're all set, {{ scan.customerFirstName }}!</h1>
+            <p>Your visit has been recorded and your loyalty balance is updated.</p>
+            <div class="points-earned"><small>YOU EARNED</small><strong>+{{ scan.pointsAwarded.toLocaleString() }}</strong><span>points</span></div>
+            <div class="balance"><span><small>Current balance</small><b>{{ scan.currentPoints.toLocaleString() }} points</b></span><i>✦</i></div>
+            <a class="primary-action" href="/">Done</a>
+          </div>
+        }
+      }
+      @case ('error') {
+        <div class="result error-result">
+          <div class="status-icon"><span>!</span></div>
+          <p class="eyebrow">WE COULDN'T COMPLETE THAT</p>
+          <h1>Let's get you sorted</h1>
+          <p>{{ errorMessage() }}</p>
+          <button class="primary-action" type="button" (click)="tryAgain()">Try again</button>
+        </div>
+      }
+      @case ('validating') {
+        <div class="result validating">
+          <div class="loading"><i></i><span>Checking your QR code…</span></div>
+          <h1>Just a moment</h1>
+          <p>We’re securely validating this rewards code.</p>
+        </div>
+      }
+      @default {
+        <div class="intro">
+          <span class="scan-mark">⌗</span>
+          <p class="eyebrow">SCAN. EARN. ENJOY.</p>
+          <h1>Claim your loyalty points</h1>
+          <p>Enter the phone number or email connected to your rewards profile to earn {{ qrCode()?.pointsPerScan || 0 }} points.</p>
+        </div>
+
+        <div class="identify">
+          <label>
+            <span>Phone number or email</span>
+            <div class="search-box"><i>♙</i><input type="text" autocomplete="email" placeholder="Phone number or email..." [ngModel]="identifier()" (ngModelChange)="identifier.set($event); errorMessage.set('')" /></div>
+          </label>
+
+          @if (errorMessage() && state() === 'identify') {
+            <p class="inline-error" role="alert">{{ errorMessage() }}</p>
+          }
+
+          <button class="primary-action" type="button" [disabled]="!identifier().trim() || state() === 'submitting'" (click)="submit()">
+            {{ state() === 'submitting' ? 'Adding your points…' : 'Claim my points' }}
+          </button>
+          <p class="privacy">Your information is used only to find your Returnly rewards profile.</p>
+        </div>
+      }
+    }
+  </section>
+
+  <footer>Powered by <b>Returnly</b> · Loyalty made simple</footer>
+</main>

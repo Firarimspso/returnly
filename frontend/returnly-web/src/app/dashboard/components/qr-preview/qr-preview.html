@@ -1,17 +1,17 @@
 <aside class="preview-panel">
-  <header><span><b>QR Preview</b><small>Customer-facing scan experience</small></span><button type="button" aria-label="Edit selected QR code" (click)="edit.emit()">✎</button></header>
+  <header><span><b>QR Preview</b><small>Customer-facing scan experience</small></span></header>
   <div class="preview-body">
     <div class="restaurant"><span>SM</span><div><b>Solé & Maple</b><small>REWARDS</small></div></div>
     <div class="qr-frame" [class.inactive]="qrCode().status === 'Inactive'">
-      <div class="qr-grid">@for (cell of cells(); track $index) { <i [class.dark]="cell"></i> }<span>R</span></div>
+      <div class="qr-grid"><app-qr-image [token]="qrCode().token" [alt]="'QR code for ' + qrCode().name" /></div>
       @if (qrCode().status === 'Inactive') { <em>Inactive</em> }
     </div>
     <h2>Scan. Earn. Enjoy.</h2><p>Scan to collect points and unlock rewards.</p>
-    <code>{{ qrCode().code }}</code>
+    <code>{{ qrCode().token }}</code>
   </div>
   <section class="details">
     <div><small>Name</small><b>{{ qrCode().name }}</b></div><div><small>Type</small><b>{{ qrCode().type }}</b></div>
-    <div class="destination"><small>Destination</small><b>{{ qrCode().destination }}</b></div>
+    <div class="destination"><small>Points per scan</small><b>✦ {{ qrCode().pointsPerScan.toLocaleString() }}</b></div>
   </section>
-  <footer><button class="download" type="button" (click)="download.emit()">⇩ Download SVG</button><button type="button" (click)="print.emit()">▣ Print</button></footer>
+  <footer><button class="download" type="button" (click)="download.emit()">⇩ Download PNG</button><button type="button" (click)="print.emit()">▣ Print</button></footer>
 </aside>

@@ -51,7 +51,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardAnalyticsRepository, DashboardAnalyticsRepository>();
         services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
         services.AddScoped<IQrCodeRepository, QrCodeRepository>();
+        services.AddScoped<IQrCodeScanProcessor, QrCodeScanProcessor>();
         services.AddScoped<IQrCodeService, QrCodeService>();
+        services.AddScoped<IPublicQrCodeService, PublicQrCodeService>();
         return services;
     }
 

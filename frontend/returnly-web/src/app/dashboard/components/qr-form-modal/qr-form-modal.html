@@ -4,7 +4,7 @@
   <div class="body">
     <label class="field"><span>QR code name</span><input maxlength="60" placeholder="e.g. Table 04" [ngModel]="name()" (ngModelChange)="name.set($event)" autofocus /></label>
     <fieldset><legend>QR code type</legend><div class="types">@for (option of types; track option.value) { <button type="button" [class.selected]="type() === option.value" (click)="type.set(option.value)"><i>{{ option.icon }}</i><span><b>{{ option.value }}</b><small>{{ option.description }}</small></span><em>✓</em></button> }</div></fieldset>
-    <label class="field"><span>Destination URL</span><div class="url-input"><i>↗</i><input type="url" [ngModel]="destination()" (ngModelChange)="destination.set($event)" /></div><small>This can later be replaced with a backend-generated campaign URL.</small></label>
+    <label class="field"><span>Points per scan</span><div class="url-input"><i>✦</i><input type="number" min="1" max="10000" [ngModel]="pointsPerScan()" (ngModelChange)="pointsPerScan.set($event)" /></div><small>Points awarded to a customer after a successful scan.</small></label>
     <label class="availability"><span><b>Active QR code</b><small>Inactive codes remain visible but cannot be scanned.</small></span><input type="checkbox" [checked]="status() === 'Active'" (change)="status.set(status() === 'Active' ? 'Inactive' : 'Active')" /><i></i></label>
     @if (error()) { <p class="error" role="alert"><span>!</span>{{ error() }}</p> }
   </div>

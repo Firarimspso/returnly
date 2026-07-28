@@ -35,6 +35,8 @@ public sealed class CreateQrCodeRequest
     public int PointsPerScan { get; init; }
 
     public bool IsActive { get; init; } = true;
+
+    public DateTimeOffset? ExpiresAt { get; init; }
 }
 
 public sealed class SetQrCodeStatusRequest
@@ -59,6 +61,7 @@ public sealed record QrCodeDto(
     bool IsActive,
     int TotalScans,
     DateTimeOffset? LastScannedAt,
+    DateTimeOffset? ExpiresAt,
     DateTimeOffset CreatedAt,
     DateTimeOffset? UpdatedAt);
 

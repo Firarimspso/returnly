@@ -107,6 +107,7 @@ export type QrCodeStatus = 'Active' | 'Inactive';
 
 export interface QrCode {
   id: number;
+  apiId?: string;
   name: string;
   type: QrCodeType;
   status: QrCodeStatus;
@@ -114,14 +115,15 @@ export interface QrCode {
   scansToday: number;
   conversions: number;
   lastScan: string;
-  destination: string;
+  destination?: string;
   createdAt: string;
-  code: string;
+  token: string;
+  pointsPerScan: number;
 }
 
 export interface QrCodeDraft {
   name: string;
   type: QrCodeType;
   status: QrCodeStatus;
-  destination: string;
+  pointsPerScan: number;
 }

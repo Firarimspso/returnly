@@ -86,6 +86,8 @@ public sealed class QrCodesController(IQrCodeService qrCodeService) : Controller
     [ProducesResponseType<ApiResponse<QrCodeScanResultDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status410Gone)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<ApiResponse<QrCodeScanResultDto>>> Scan(
         [FromBody] ScanQrCodeRequest request,
         CancellationToken cancellationToken)
@@ -110,6 +112,20 @@ public sealed class QrCodesController(IQrCodeService qrCodeService) : Controller
             return Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "QR code inactive",
+                detail: exception.Message);
+        }
+        catch (QrCodeExpiredException exception)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status410Gone,
+                title: "QR code expired",
+                detail: exception.Message);
+        }
+        catch (QrCodeDuplicateScanException exception)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status429TooManyRequests,
+                title: "Points already awarded",
                 detail: exception.Message);
         }
     }

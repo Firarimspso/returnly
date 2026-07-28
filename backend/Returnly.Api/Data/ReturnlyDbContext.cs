@@ -11,6 +11,7 @@ public sealed class ReturnlyDbContext(DbContextOptions<ReturnlyDbContext> option
     public DbSet<Reward> Rewards => Set<Reward>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
     public DbSet<QrCode> QrCodes => Set<QrCode>();
+    public DbSet<QrCodeScan> QrCodeScans => Set<QrCodeScan>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

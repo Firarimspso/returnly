@@ -15,7 +15,7 @@ export class QrFormModalComponent {
   protected readonly name = signal('');
   protected readonly type = signal<QrCodeType>('General');
   protected readonly status = signal<QrCodeStatus>('Active');
-  protected readonly destination = signal('https://returnly.app/sole-maple');
+  protected readonly pointsPerScan = signal<number | null>(5);
   protected readonly error = signal('');
   protected readonly types: { value: QrCodeType; icon: string; description: string }[] = [
     { value: 'General', icon: '⌗', description: 'Menus, windows, and general use' },
@@ -30,14 +30,23 @@ export class QrFormModalComponent {
       this.name.set(qr.name);
       this.type.set(qr.type);
       this.status.set(qr.status);
-      this.destination.set(qr.destination);
+      this.pointsPerScan.set(qr.pointsPerScan);
     });
   }
 
   protected submit(): void {
     if (!this.name().trim()) { this.error.set('Enter a name for this QR code.'); return; }
-    try { new URL(this.destination()); } catch { this.error.set('Enter a valid destination URL.'); return; }
-    this.saved.emit({ name: this.name().trim(), type: this.type(), status: this.status(), destination: this.destination().trim() });
+    const points = Math.round(Number(this.pointsPerScan()));
+    if (!Number.isFinite(points) || points < 1 || points > 10000) {
+      this.error.set('Points per scan must be between 1 and 10,000.');
+      return;
+    }
+    this.saved.emit({
+      name: this.name().trim(),
+      type: this.type(),
+      status: this.status(),
+      pointsPerScan: points,
+    });
   }
 
   @HostListener('document:keydown.escape')

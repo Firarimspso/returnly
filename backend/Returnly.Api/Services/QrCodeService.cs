@@ -7,6 +7,7 @@ namespace Returnly.Api.Services;
 
 public sealed class QrCodeService(
     IQrCodeRepository qrCodeRepository,
+    IQrCodeScanProcessor qrCodeScanProcessor,
     ICurrentTenant currentTenant) : IQrCodeService
 {
     public async Task<PagedResponse<QrCodeDto>> GetPagedAsync(
@@ -59,6 +60,7 @@ public sealed class QrCodeService(
             Token = await GenerateUniqueTokenAsync(cancellationToken),
             PointsPerScan = request.PointsPerScan,
             IsActive = request.IsActive,
+            ExpiresAt = request.ExpiresAt,
         };
 
         await qrCodeRepository.AddAsync(qrCode, cancellationToken);
@@ -101,53 +103,12 @@ public sealed class QrCodeService(
 
     public async Task<QrCodeScanResultDto> ScanAsync(
         ScanQrCodeRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var restaurantId = GetRestaurantId();
-        var qrCode = await qrCodeRepository.GetByTokenAsync(
-            restaurantId, request.Token.Trim(), cancellationToken)
-            ?? throw new QrCodeNotFoundException();
-        if (!qrCode.IsActive)
-        {
-            throw new QrCodeInactiveException();
-        }
-
-        var customer = await qrCodeRepository.GetCustomerAsync(
-            restaurantId, request.CustomerId, cancellationToken)
-            ?? throw new QrCodeCustomerNotFoundException();
-
-        customer.CurrentPoints = checked(customer.CurrentPoints + qrCode.PointsPerScan);
-        customer.LifetimePoints = checked(customer.LifetimePoints + qrCode.PointsPerScan);
-        var scannedAt = DateTimeOffset.UtcNow;
-        qrCode.TotalScans = checked(qrCode.TotalScans + 1);
-        qrCode.LastScannedAt = scannedAt;
-
-        var transaction = new PointTransaction
-        {
-            RestaurantId = restaurantId,
-            CustomerId = customer.Id,
-            QrCodeId = qrCode.Id,
-            Customer = customer,
-            QrCode = qrCode,
-            Points = qrCode.PointsPerScan,
-            Type = PointTransactionType.Earn,
-            Reason = $"QR scan: {qrCode.Name}",
-            BalanceAfter = customer.CurrentPoints,
-            CreatedAt = scannedAt,
-        };
-
-        await qrCodeRepository.AddTransactionAsync(transaction, cancellationToken);
-        await qrCodeRepository.SaveChangesAsync(cancellationToken);
-
-        return new QrCodeScanResultDto(
-            ToDto(qrCode),
-            customer.Id,
-            $"{customer.FirstName} {customer.LastName}",
-            qrCode.PointsPerScan,
-            customer.CurrentPoints,
-            transaction.Id,
-            scannedAt);
-    }
+        CancellationToken cancellationToken = default) =>
+        await qrCodeScanProcessor.ScanForCustomerAsync(
+            GetRestaurantId(),
+            request.Token.Trim(),
+            request.CustomerId,
+            cancellationToken);
 
     private async Task<string> GenerateUniqueTokenAsync(
         CancellationToken cancellationToken)
@@ -176,6 +137,7 @@ public sealed class QrCodeService(
         qrCode.IsActive,
         qrCode.TotalScans,
         qrCode.LastScannedAt,
+        qrCode.ExpiresAt,
         qrCode.CreatedAt,
         qrCode.UpdatedAt);
 }

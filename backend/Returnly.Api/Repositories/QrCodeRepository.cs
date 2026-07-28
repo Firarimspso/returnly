@@ -61,12 +61,60 @@ public sealed class QrCodeRepository(ReturnlyDbContext dbContext) : IQrCodeRepos
             qrCode => qrCode.RestaurantId == restaurantId && qrCode.Token == token,
             cancellationToken);
 
+    public Task<QrCode?> GetPublicByTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default) =>
+        dbContext.QrCodes
+            .Include(qrCode => qrCode.Restaurant)
+            .FirstOrDefaultAsync(qrCode => qrCode.Token == token, cancellationToken);
+
     public Task<Customer?> GetCustomerAsync(
         Guid restaurantId,
         Guid customerId,
         CancellationToken cancellationToken = default) =>
         dbContext.Customers.FirstOrDefaultAsync(
             customer => customer.RestaurantId == restaurantId && customer.Id == customerId,
+            cancellationToken);
+
+    public async Task<Customer?> GetCustomerByIdentifierAsync(
+        Guid restaurantId,
+        string identifier,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedIdentifier = identifier.Trim().ToLowerInvariant();
+        if (normalizedIdentifier.Contains('@'))
+        {
+            return await dbContext.Customers.FirstOrDefaultAsync(
+                customer => customer.RestaurantId == restaurantId
+                    && customer.Email.ToLower() == normalizedIdentifier,
+                cancellationToken);
+        }
+
+        var normalizedPhone = NormalizePhone(identifier);
+        if (normalizedPhone.Length < 7)
+        {
+            return null;
+        }
+
+        var pattern = $"%{string.Join('%', normalizedPhone.ToCharArray())}%";
+        var candidates = await dbContext.Customers
+            .Where(customer => customer.RestaurantId == restaurantId
+                && EF.Functions.ILike(customer.PhoneNumber, pattern))
+            .Take(10)
+            .ToListAsync(cancellationToken);
+        return candidates.FirstOrDefault(
+            customer => NormalizePhone(customer.PhoneNumber) == normalizedPhone);
+    }
+
+    public Task<bool> ScanExistsAsync(
+        Guid qrCodeId,
+        Guid customerId,
+        DateOnly scanDate,
+        CancellationToken cancellationToken = default) =>
+        dbContext.QrCodeScans.AnyAsync(
+            scan => scan.QrCodeId == qrCodeId
+                && scan.CustomerId == customerId
+                && scan.ScanDate == scanDate,
             cancellationToken);
 
     public Task<bool> NameExistsAsync(
@@ -94,10 +142,18 @@ public sealed class QrCodeRepository(ReturnlyDbContext dbContext) : IQrCodeRepos
         CancellationToken cancellationToken = default) =>
         dbContext.PointTransactions.AddAsync(transaction, cancellationToken).AsTask();
 
+    public Task AddScanAsync(
+        QrCodeScan scan,
+        CancellationToken cancellationToken = default) =>
+        dbContext.QrCodeScans.AddAsync(scan, cancellationToken).AsTask();
+
     public void Remove(QrCode qrCode) => dbContext.QrCodes.Remove(qrCode);
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    private static string NormalizePhone(string value) =>
+        new(value.Where(char.IsDigit).ToArray());
 }

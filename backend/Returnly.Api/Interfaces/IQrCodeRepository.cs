@@ -20,9 +20,21 @@ public interface IQrCodeRepository
         Guid restaurantId,
         string token,
         CancellationToken cancellationToken = default);
+    Task<QrCode?> GetPublicByTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default);
     Task<Customer?> GetCustomerAsync(
         Guid restaurantId,
         Guid customerId,
+        CancellationToken cancellationToken = default);
+    Task<Customer?> GetCustomerByIdentifierAsync(
+        Guid restaurantId,
+        string identifier,
+        CancellationToken cancellationToken = default);
+    Task<bool> ScanExistsAsync(
+        Guid qrCodeId,
+        Guid customerId,
+        DateOnly scanDate,
         CancellationToken cancellationToken = default);
     Task<bool> NameExistsAsync(
         Guid restaurantId,
@@ -33,6 +45,7 @@ public interface IQrCodeRepository
     Task AddTransactionAsync(
         PointTransaction transaction,
         CancellationToken cancellationToken = default);
+    Task AddScanAsync(QrCodeScan scan, CancellationToken cancellationToken = default);
     void Remove(QrCode qrCode);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
