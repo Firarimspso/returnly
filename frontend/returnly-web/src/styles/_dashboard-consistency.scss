@@ -1,0 +1,161 @@
+/*
+ * Shared admin-dashboard geometry and interaction tokens.
+ * Scoped to the authenticated dashboard so public and marketing surfaces are
+ * unaffected.
+ */
+app-dashboard-layout {
+  --dashboard-card-radius: 12px;
+  --dashboard-control-radius: 8px;
+  --dashboard-control-height: 42px;
+  --dashboard-card-padding: 20px;
+  --dashboard-motion: 180ms ease;
+
+  .portal-content {
+    :is(
+      .panel,
+      .management,
+      .customer-panel,
+      .reward-card,
+      .add-card,
+      .preview-panel,
+      .no-preview,
+      .insight,
+      .statistics article,
+      .customer-summary article,
+      app-kpi-card article,
+      .sections > section,
+      .settings-layout > nav,
+      .theme aside,
+      .modal,
+      .dialog
+    ) {
+      border-radius: var(--dashboard-card-radius) !important;
+    }
+
+    :is(.statistics article, .customer-summary article, .reward-card, .add-card, app-kpi-card article) {
+      padding: var(--dashboard-card-padding) !important;
+    }
+
+    :is(.panel, .management, .customer-panel, .sections > section) > header,
+    :is(.management, .customer-panel) > .toolbar {
+      padding: 18px 20px !important;
+    }
+
+    :is(
+      input:not([type='checkbox']):not([type='radio']):not([type='color']),
+      select
+    ) {
+      height: var(--dashboard-control-height) !important;
+      border-radius: var(--dashboard-control-radius) !important;
+    }
+
+    textarea {
+      min-height: 92px;
+      border-radius: var(--dashboard-control-radius) !important;
+    }
+
+    :is(.search, .search-field) {
+      height: var(--dashboard-control-height) !important;
+      padding-inline: 12px !important;
+      border-radius: var(--dashboard-control-radius) !important;
+    }
+
+    :is(
+      .primary-button,
+      .save,
+      .export-button,
+      .toolbar > select,
+      .management > footer > button,
+      .empty button,
+      .empty-state button,
+      .modal > footer button,
+      .dialog button,
+      .upload button,
+      .theme aside button,
+      .insight > button
+    ) {
+      min-height: 40px !important;
+      padding: 0 14px !important;
+      border-radius: var(--dashboard-control-radius) !important;
+    }
+
+    app-date-range-selector .trigger {
+      height: var(--dashboard-control-height) !important;
+      border-radius: var(--dashboard-control-radius) !important;
+    }
+
+    :is(
+      .actions button,
+      .row-actions button,
+      .reward-card footer button,
+      .view-toggle button,
+      .more-button
+    ) {
+      width: 34px !important;
+      height: 34px !important;
+      min-height: 34px !important;
+      padding: 0 !important;
+      border-radius: 8px !important;
+    }
+
+    table th {
+      padding: 12px 16px !important;
+    }
+
+    table td {
+      padding: 14px 16px !important;
+    }
+
+    :is(
+      button,
+      a,
+      input,
+      textarea,
+      select,
+      .reward-card,
+      .add-card,
+      .statistics article,
+      .customer-summary article,
+      app-kpi-card article
+    ) {
+      transition:
+        color var(--dashboard-motion),
+        background-color var(--dashboard-motion),
+        border-color var(--dashboard-motion),
+        box-shadow var(--dashboard-motion),
+        transform var(--dashboard-motion);
+    }
+
+    :is(.reward-card, .add-card, .statistics article, .customer-summary article, app-kpi-card article):hover {
+      border-color: #dcd5fb !important;
+      box-shadow: 0 12px 28px rgba(59, 45, 108, .08);
+      transform: translateY(-2px);
+    }
+
+    :is(button, a):focus-visible {
+      outline: 3px solid #ddd6ff;
+      outline-offset: 2px;
+    }
+
+    :is(
+      input:not([type='checkbox']):not([type='radio']),
+      textarea,
+      select
+    ):focus {
+      border-color: #9a89e9 !important;
+      outline: 0;
+      box-shadow: 0 0 0 3px #efecff !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .portal-content * {
+      scroll-behavior: auto !important;
+      transition-duration: 0s !important;
+    }
+
+    .portal-content :is(.reward-card, .add-card, .statistics article, .customer-summary article, app-kpi-card article):hover {
+      transform: none;
+    }
+  }
+}

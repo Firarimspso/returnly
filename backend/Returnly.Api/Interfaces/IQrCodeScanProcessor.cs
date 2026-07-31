@@ -16,4 +16,9 @@ public interface IQrCodeScanProcessor
         string token,
         string identifier,
         CancellationToken cancellationToken = default);
+    Task<PublicQrScanResultDto> ScanAuthenticatedPublicAsync(
+        Guid restaurantId,
+        string token,
+        Guid customerId,
+        CancellationToken cancellationToken = default);
 }

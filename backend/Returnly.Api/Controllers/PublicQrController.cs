@@ -43,34 +43,12 @@ public sealed class PublicQrController(IPublicQrCodeService publicQrCodeService)
         [FromBody] PublicQrScanRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await publicQrCodeService.ScanAsync(
-                token, request, cancellationToken);
-            return Ok(new ApiResponse<PublicQrScanResultDto>(
-                result,
-                "Points awarded."));
-        }
-        catch (QrCodeCustomerNotFoundException exception)
-        {
-            return PublicProblem(
-                StatusCodes.Status404NotFound,
-                "customer_not_found",
-                "Customer profile not found",
-                exception.Message);
-        }
-        catch (QrCodeDuplicateScanException exception)
-        {
-            return PublicProblem(
-                StatusCodes.Status429TooManyRequests,
-                "duplicate_scan",
-                "Points already awarded",
-                exception.Message);
-        }
-        catch (Exception exception) when (IsQrAvailabilityException(exception))
-        {
-            return AvailabilityProblem(exception);
-        }
+        await Task.CompletedTask;
+        return PublicProblem(
+            StatusCodes.Status410Gone,
+            "verification_required",
+            "Customer verification required",
+            "This scan flow now requires a one-time verification code.");
     }
 
     private ObjectResult AvailabilityProblem(Exception exception) =>

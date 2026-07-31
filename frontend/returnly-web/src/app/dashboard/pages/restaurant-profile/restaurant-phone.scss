@@ -1,0 +1,59 @@
+.phone-field {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #ddd9e4;
+  border-radius: 9px;
+  background: #fbfafd;
+  transition: 0.18s;
+}
+
+.phone-field:focus-within {
+  border-color: #806aec;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(105, 82, 232, 0.1);
+}
+
+.phone-field.invalid {
+  border-color: #cb6267;
+  box-shadow: 0 0 0 4px rgba(203, 98, 103, 0.09);
+}
+
+.phone-field > b {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid #ddd9e4;
+  color: #514d59;
+  background: #f3f1f6;
+  font-size: 14px;
+}
+
+.phone-field input {
+  height: 100% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.field-error {
+  color: #aa4147;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.phone-help {
+  position: static !important;
+  color: #7d7885 !important;
+  font-size: 11px !important;
+}
+
+.day-error {
+  grid-column: 3 / -1;
+  color: #aa4147;
+  font-size: 12px;
+  font-style: normal;
+}

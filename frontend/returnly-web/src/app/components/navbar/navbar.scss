@@ -69,7 +69,8 @@ nav {
 }
 
 nav a,
-.login {
+.login,
+.customer-rewards-link {
   color: #565263;
   font-size: 14px;
   font-weight: 600;
@@ -80,6 +81,9 @@ nav a:hover,
 .login:hover {
   color: var(--violet);
 }
+
+.customer-rewards-link { color: var(--violet); }
+.customer-rewards-link:hover { color: var(--violet-dark); }
 
 .actions {
   gap: 22px;
@@ -145,8 +149,12 @@ nav a:hover,
   }
 
   .actions {
-    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
     border-top: 1px solid var(--line);
     padding-top: 18px;
   }
+
+  .actions .btn { width: 100%; }
 }

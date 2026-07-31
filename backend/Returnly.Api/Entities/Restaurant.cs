@@ -7,6 +7,14 @@ public sealed class Restaurant : BaseEntity
     public required string Email { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Address { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? CoverImageUrl { get; set; }
+    public string? Description { get; set; }
+    public string? Website { get; set; }
+    public string BusinessHours { get; set; } = "{}";
+    public string? Instagram { get; set; }
+    public string? Facebook { get; set; }
+    public string PrimaryBrandColor { get; set; } = "#6952E8";
     public string TimeZone { get; set; } = "UTC";
     public string Currency { get; set; } = "USD";
     public bool IsActive { get; set; } = true;
@@ -17,4 +25,7 @@ public sealed class Restaurant : BaseEntity
     public ICollection<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
     public ICollection<QrCode> QrCodes { get; set; } = new List<QrCode>();
     public ICollection<QrCodeScan> QrCodeScans { get; set; } = new List<QrCodeScan>();
+    public ICollection<RedemptionRequest> RedemptionRequests { get; set; } = new List<RedemptionRequest>();
+    public ICollection<CustomerVerificationChallenge> CustomerVerificationChallenges { get; set; } =
+        new List<CustomerVerificationChallenge>();
 }

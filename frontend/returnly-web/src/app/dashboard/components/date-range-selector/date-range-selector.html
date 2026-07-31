@@ -1,0 +1,29 @@
+<div class="date-range">
+  <button
+    class="trigger"
+    type="button"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="open()"
+    (click)="toggle($event)"
+  >
+    <span>{{ selected().label }}</span>
+    <i [class.open]="open()">⌄</i>
+  </button>
+
+  @if (open()) {
+    <div class="menu" role="menu" aria-label="Dashboard date range" (click)="$event.stopPropagation()">
+      @for (option of options; track option.key) {
+        <button
+          type="button"
+          role="menuitemradio"
+          [attr.aria-checked]="selected().key === option.key"
+          [class.selected]="selected().key === option.key"
+          (click)="select(option, $event)"
+        >
+          <span>{{ option.label }}</span>
+          @if (selected().key === option.key) { <i>✓</i> }
+        </button>
+      }
+    </div>
+  }
+</div>

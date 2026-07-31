@@ -1,3 +1,22 @@
+@use './styles/dashboard-typography';
+@use './styles/dashboard-consistency';
+@use './styles/dashboard-overview';
+@use './styles/dashboard-analytics';
+@use './styles/customer-scan';
+@use './styles/customer-rewards';
+
+.scan-page .restaurant-logo img,
+.restaurant-strip > span img,
+.preview-panel .restaurant > span img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-page .primary-action { background: var(--scan-brand, #6952e8); }
+.rewards-page .restaurant-strip > i,
+.rewards-page .eyebrow { color: var(--portal-brand, #6952e8); }
+.rewards-page .reward-card footer button { background: var(--portal-brand, #6952e8); }
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 
 :root {

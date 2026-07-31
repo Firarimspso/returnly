@@ -1,0 +1,140 @@
+.modal-icon {
+  font-size: 20px;
+}
+
+.types button {
+  min-height: 116px;
+  padding: 14px 11px;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.types button:hover {
+  border-color: #bdb4e8;
+  background: #fbfaff;
+  transform: translateY(-1px);
+}
+
+.types button.selected {
+  border-color: #7660df;
+  background: linear-gradient(145deg, #faf9ff, #f2efff);
+  box-shadow: 0 0 0 2px #eeebff, 0 9px 20px rgba(75, 57, 158, .08);
+}
+
+.types i {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: #f0edff;
+  font-size: 21px;
+}
+
+.types b { font-size: 10px; }
+.types small { max-width: 120px; font-size: 8px; }
+
+.types em {
+  width: 17px;
+  height: 17px;
+  padding: 3px;
+  border-radius: 50%;
+  color: #fff;
+  background: #6952e8;
+}
+
+.types em svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.url-input input {
+  padding-right: 45px;
+  padding-left: 10px;
+}
+
+.url-input i {
+  right: 12px;
+  left: auto;
+  color: #7d7785;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.live-preview {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 2px 0 16px;
+  padding: 12px;
+  border: 1px solid #e3dff0;
+  border-radius: 10px;
+  background: #faf9fd;
+}
+
+.live-icon {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 39px;
+  place-items: center;
+  border-radius: 10px;
+  color: #6952e8;
+  background: #efecff;
+  font-size: 20px;
+}
+
+.live-preview > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.live-preview small {
+  color: #7661d7;
+  font-size: 8px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.live-preview b {
+  margin-top: 3px;
+  overflow: hidden;
+  color: #342f3b;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-preview p {
+  margin: 3px 0 0;
+  color: #898391;
+  font-size: 8px;
+}
+
+.live-preview > em {
+  padding: 4px 7px;
+  border-radius: 99px;
+  color: #2d7b59;
+  background: #e8f6ef;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 750;
+}
+
+@media (max-width: 480px) {
+  .types button {
+    min-height: 78px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+  }
+
+  .types span { align-items: flex-start; text-align: left; }
+  .live-preview > em { display: none; }
+}

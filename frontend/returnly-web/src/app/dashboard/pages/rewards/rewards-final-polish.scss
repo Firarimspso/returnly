@@ -1,0 +1,190 @@
+.reward-card {
+  display: flex;
+  min-height: 310px;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.reward-icon {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+  border-radius: 15px;
+  font-size: 28px;
+}
+
+.reward-icon img,
+.table-reward > i img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.category-row { margin-top: 18px; }
+
+.category-row > span,
+.category {
+  gap: 5px;
+  padding: 5px 8px;
+  font-size: 8px;
+}
+
+.category-row > span[data-category='Food'],
+.category[data-category='Food'] { color: #9a4e32; background: #fbeee9; }
+.category-row > span[data-category='Drinks'],
+.category[data-category='Drinks'] { color: #287567; background: #e7f5f1; }
+.category-row > span[data-category='Discount'],
+.category[data-category='Discount'] { color: #6749c5; background: #f0ecff; }
+.category-row > span[data-category='Experience'],
+.category[data-category='Experience'] { color: #9b681d; background: #fff3dc; }
+
+.reward-card h2 {
+  margin-top: 16px;
+  font-size: 15px;
+}
+
+.reward-card > p {
+  height: auto;
+  min-height: 39px;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.reward-metrics {
+  margin-top: 17px;
+}
+
+.reward-metrics > span { padding: 11px; }
+.reward-metrics small { font-size: 9px; }
+.reward-metrics b { font-size: 11px; line-height: 1.35; }
+
+.card-footer {
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.primary-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.reward-card .primary-actions > button {
+  display: inline-flex;
+  width: auto;
+  height: 30px;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 0 8px;
+  font-size: 9px;
+  font-weight: 700;
+  transition: border-color .16s ease, color .16s ease, background .16s ease;
+}
+
+.primary-actions > button:hover,
+.compact-actions > button:hover {
+  border-color: #c7bdf2;
+  color: #5943c7;
+  background: #f6f3ff;
+}
+
+.primary-actions svg,
+.compact-actions svg,
+.action-menu svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.action-menu {
+  position: relative;
+}
+
+.action-menu summary {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-left: 0;
+  place-items: center;
+  border: 1px solid #e3e0e5;
+  border-radius: 7px;
+  color: #716c77;
+  background: #fff;
+  cursor: pointer;
+  list-style: none;
+}
+
+.action-menu summary::-webkit-details-marker { display: none; }
+
+.action-menu > div {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  bottom: 36px;
+  width: 130px;
+  padding: 5px;
+  border: 1px solid #e5e1e8;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(35, 29, 49, .14);
+}
+
+.action-menu > div button {
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  border: 0;
+  color: #b34d47;
+  background: transparent;
+  font-size: 10px;
+  text-align: left;
+}
+
+.action-menu > div button:hover { background: #fff1f0; }
+
+.table-reward > i { font-size: 19px; }
+
+.compact-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.compact-actions > button {
+  display: grid;
+  margin: 0;
+  place-items: center;
+}
+
+.compact-actions .action-menu > div {
+  top: 36px;
+  bottom: auto;
+}
+
+@media (max-width: 1260px) {
+  .reward-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .reward-grid { grid-template-columns: 1fr; }
+  .toolbar { flex-wrap: wrap; }
+  .search { width: 100%; }
+  .toolbar select { margin-left: 0; }
+}
+
+@media (max-width: 420px) {
+  .reward-card { padding: 17px; }
+  .card-footer { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .primary-actions { width: 100%; }
+  .reward-card .primary-actions > button { flex: 1; justify-content: center; }
+  .reward-card .primary-actions > button span { display: none; }
+  .reward-card .primary-actions > button { min-width: 36px; }
+  .action-menu summary { width: 36px; }
+}

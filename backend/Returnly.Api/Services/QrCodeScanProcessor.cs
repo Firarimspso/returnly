@@ -6,7 +6,9 @@ using Returnly.Api.Interfaces;
 
 namespace Returnly.Api.Services;
 
-public sealed class QrCodeScanProcessor(IQrCodeRepository qrCodeRepository)
+public sealed class QrCodeScanProcessor(
+    IQrCodeRepository qrCodeRepository,
+    ICustomerPortalTokenService customerPortalTokenService)
     : IQrCodeScanProcessor
 {
     public async Task<QrCodeScanResultDto> ScanForCustomerAsync(
@@ -54,13 +56,46 @@ public sealed class QrCodeScanProcessor(IQrCodeRepository qrCodeRepository)
             qrCode.RestaurantId, identifier, cancellationToken)
             ?? throw new QrCodeCustomerNotFoundException();
         var result = await AwardAsync(qrCode, customer, cancellationToken);
+        var portalToken = customerPortalTokenService.Generate(customer);
 
         return new PublicQrScanResultDto(
             qrCode.Restaurant.Name,
+            qrCode.Restaurant.LogoUrl,
+            qrCode.Restaurant.PrimaryBrandColor,
             customer.FirstName,
             result.PointsAwarded,
             result.CurrentPoints,
-            result.ScannedAt);
+            result.ScannedAt,
+            portalToken.Value,
+            portalToken.ExpiresAt);
+    }
+
+    public async Task<PublicQrScanResultDto> ScanAuthenticatedPublicAsync(
+        Guid restaurantId,
+        string token,
+        Guid customerId,
+        CancellationToken cancellationToken = default)
+    {
+        var qrCode = await qrCodeRepository.GetByTokenAsync(
+            restaurantId, token, cancellationToken)
+            ?? throw new QrCodeNotFoundException();
+        EnsureAvailable(qrCode);
+        var customer = await qrCodeRepository.GetCustomerAsync(
+            restaurantId, customerId, cancellationToken)
+            ?? throw new QrCodeCustomerNotFoundException();
+        var result = await AwardAsync(qrCode, customer, cancellationToken);
+        var portalToken = customerPortalTokenService.Generate(customer);
+
+        return new PublicQrScanResultDto(
+            qrCode.Restaurant.Name,
+            qrCode.Restaurant.LogoUrl,
+            qrCode.Restaurant.PrimaryBrandColor,
+            customer.FirstName,
+            result.PointsAwarded,
+            result.CurrentPoints,
+            result.ScannedAt,
+            portalToken.Value,
+            portalToken.ExpiresAt);
     }
 
     private async Task<ScanAwardResult> AwardAsync(
@@ -148,6 +183,10 @@ public sealed class QrCodeScanProcessor(IQrCodeRepository qrCodeRepository)
 
     private static PublicQrCodeDto ToPublicDto(QrCode qrCode) => new(
         qrCode.Restaurant.Name,
+        qrCode.Restaurant.LogoUrl,
+        qrCode.Restaurant.CoverImageUrl,
+        qrCode.Restaurant.Description,
+        qrCode.Restaurant.PrimaryBrandColor,
         qrCode.Name,
         qrCode.Type,
         qrCode.PointsPerScan,

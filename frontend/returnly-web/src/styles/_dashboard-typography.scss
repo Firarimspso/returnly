@@ -1,0 +1,126 @@
+/*
+ * Dashboard-only type scale.
+ * This layer intentionally changes typography and contrast only; component
+ * spacing, dimensions, grids, KPI values, and responsive rules remain owned
+ * by their respective components.
+ */
+app-dashboard-layout {
+  .portal {
+    font-size: 16px;
+  }
+
+  aside nav a {
+    color: #575260;
+    font-size: 16px;
+  }
+
+  aside .workspace b,
+  aside .collapse {
+    font-size: 14px;
+  }
+
+  aside .workspace small,
+  aside .upgrade p,
+  aside .upgrade button {
+    color: #6f6a77;
+    font-size: 13px;
+  }
+
+  aside .nav-label {
+    color: #77727f;
+    font-size: 11px;
+  }
+
+  aside .upgrade b {
+    font-size: 14px;
+  }
+
+  .global-search input {
+    color: #45404c;
+    font-size: 15px;
+  }
+
+  .profile b,
+  .profile-menu b {
+    font-size: 14px;
+  }
+
+  .profile-menu small {
+    color: #6f6a77;
+    font-size: 13px;
+  }
+
+  .profile-menu a,
+  .profile-menu button {
+    color: #514c59;
+    font-size: 14px;
+  }
+
+  app-page-header h1 {
+    font-size: 27px;
+  }
+
+  app-page-header p {
+    color: #68636f;
+    font-size: 15px;
+  }
+
+  .portal-content {
+    :is(input, textarea, select) {
+      color: #3f3a46;
+      font-size: 15px !important;
+    }
+
+    :is(button, a) {
+      font-size: 14px;
+    }
+
+    :is(p, small, time) {
+      color: #6d6874;
+      font-size: 14px !important;
+    }
+
+    :is(td, li) {
+      color: #5f5a66;
+      font-size: 14px !important;
+    }
+
+    th {
+      color: #706b77;
+      font-size: 12px !important;
+    }
+
+    td :is(b, strong) {
+      font-size: 15px;
+    }
+
+    :is(.panel, .management, .settings-layout section) header b,
+    :is(.reward-card, .empty, .empty-state) h2 {
+      font-size: 16px !important;
+    }
+
+    :is(.field, label) > span,
+    legend {
+      color: #514c58;
+      font-size: 14px !important;
+    }
+
+    :is(
+      .status,
+      .type,
+      .category,
+      .no-data,
+      .category-row span,
+      .category-row i,
+      .table-status span,
+      .status-toggle span
+    ) {
+      font-size: 13px !important;
+    }
+
+    :is(.pagination, .management > footer, .activity-head) {
+      color: #6f6a76;
+      font-size: 13px !important;
+    }
+  }
+}

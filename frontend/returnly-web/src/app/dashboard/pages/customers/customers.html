@@ -5,7 +5,7 @@
 <section class="customer-summary" aria-label="Customer summary">
   <article><span class="summary-icon all">♙</span><div><small>Total customers</small><b>{{ data.customers().length }}</b></div></article>
   <article><span class="summary-icon active">✓</span><div><small>Active</small><b>{{ activeCount() }}</b></div></article>
-  <article><span class="summary-icon vip">★</span><div><small>VIP members</small><b>{{ vipCount() }}</b></div></article>
+  <article><span class="summary-icon returning">↻</span><div><small>Returning customers</small><b>{{ returningCount() }}</b></div></article>
   <article><span class="summary-icon new">＋</span><div><small>New customers</small><b>{{ newCount() }}</b></div></article>
 </section>
 
@@ -29,7 +29,13 @@
         </button>
       }
     </div>
-    <button class="export-button" type="button">⇩ Export</button>
+    <button class="export-button" type="button" [disabled]="!customers().length" (click)="exportCustomers()">⇩ Export CSV</button>
+    <div class="future-filters" hidden aria-hidden="true">
+      <button type="button" disabled>No visits in 30 days</button>
+      <button type="button" disabled>Eligible for reward</button>
+      <button type="button" disabled>High-value customers</button>
+      <button type="button" disabled>Birthday this week</button>
+    </div>
   </header>
 
   @if (pagedCustomers().length) {
@@ -55,9 +61,9 @@
               <td><b class="customer-name">{{ customer.name }}</b></td>
               <td>{{ customer.phone }}</td>
               <td><a [href]="'mailto:' + customer.email" (click)="$event.stopPropagation()">{{ customer.email }}</a></td>
-              <td><strong class="points">✦ {{ customer.points.toLocaleString() }}</strong></td>
+              <td><strong class="points">{{ customer.points.toLocaleString() }} pts</strong></td>
               <td>{{ customer.visits }}</td>
-              <td>{{ customer.lastVisit }}</td>
+              <td>@let visit = lastVisitBadge(customer); <span class="visit-badge" [class]="visit.tone">{{ visit.label }}</span></td>
               <td><span class="status" [class]="customer.status.toLowerCase()">{{ customer.status }}</span></td>
               <td><button class="more-button" type="button" [attr.aria-label]="'View ' + customer.name" (click)="$event.stopPropagation(); openCustomer(customer)">•••</button></td>
             </tr>

@@ -1,0 +1,14 @@
+@switch (type()) {
+  @case ('Table') {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10h14M7 10l-2 10m12-10 2 10M8 4h8l1 6H7l1-6Z" /></svg>
+  }
+  @case ('Receipt') {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6m-6 4h6m-6 4h4" /></svg>
+  }
+  @case ('General') {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm11 0h2m3 0v2m-6 2h3m3 0v2m-6 0h2" /></svg>
+  }
+  @default {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M7 12h10m-7 7h4" /></svg>
+  }
+}

@@ -1,7 +1,88 @@
-<app-page-header title="Analytics" description="Understand what keeps your best customers coming back."><button class="period">Last 30 days ⌄</button></app-page-header>
-<section class="kpis"><app-kpi-card icon="↻" value="68.4%" label="Repeat Visit Rate" trend="+5.2%" detail="Industry average is 42%" /><app-kpi-card icon="◷" value="3.8" label="Visits per Customer" trend="+9.1%" detail="Up from 3.5 last month" /><app-kpi-card icon="$" value="$42.60" label="Average Spend" trend="+4.3%" detail="Per loyalty member visit" /><app-kpi-card icon="✦" value="84" label="Loyalty Score" trend="+7 pts" detail="Excellent customer retention" /></section>
-<section class="analytics-grid">
-  <article class="panel retention"><header><span><b>Customer retention</b><small>New versus returning customer visits</small></span><div><i></i> Returning <i></i> New</div></header><div class="line-chart">@for (point of line; track $index){<span [style.height.%]="point"><i></i></span>}</div><footer><span>Jun 1</span><span>Jun 8</span><span>Jun 15</span><span>Jun 22</span><span>Jun 30</span></footer></article>
-  <article class="panel cohorts"><header><span><b>Customer segments</b><small>By engagement level</small></span></header><div class="big-donut"><span><b>2,847</b><small>Customers</small></span></div><ul><li><i></i>Loyal regulars <b>38%</b></li><li><i></i>Occasional <b>34%</b></li><li><i></i>New <b>18%</b></li><li><i></i>At risk <b>10%</b></li></ul></article>
-  <article class="panel hours"><header><span><b>Popular visit times</b><small>Visits by day and time</small></span></header><div class="heatmap">@for(day of ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];track day){<b>{{day}}</b>@for(cell of [1,2,3,4,5,6];track cell){<i [style.opacity]="((cell + $index) % 5 + 2) / 7"></i>}}</div><footer><span>9am</span><span>12pm</span><span>3pm</span><span>6pm</span><span>9pm</span></footer></article>
-</section>
+<app-page-header title="Analytics" [description]="'Live loyalty insights for ' + (analytics()?.restaurantName || 'your restaurant') + '.'">
+  <app-date-range-selector (changed)="changeRange($event)" />
+</app-page-header>
+
+@if (loading()) {
+  <section class="analytics-skeleton" aria-label="Loading analytics" aria-live="polite">
+    <div class="skeleton-kpis">@for (item of [1, 2, 3, 4]; track item) { <article><i></i><b></b><span></span><small></small></article> }</div>
+    <div class="skeleton-panels"><article class="wide"><header></header><div></div></article><article><header></header><div></div></article><article class="wide short"><header></header><div></div></article><article class="short"><header></header><div></div></article></div>
+    <span class="sr-only">Loading analytics for {{ selectedRange().label }}</span>
+  </section>
+} @else if (errorMessage()) {
+  <section class="analytics-state error" role="alert"><span>!</span><div><b>Analytics are temporarily unavailable</b><p>{{ errorMessage() }}</p><button type="button" (click)="retry()">Try again</button></div></section>
+} @else if (analytics(); as data) {
+  <section class="kpis">
+    <app-kpi-card icon="♙" [value]="formatNumber(data.totalCustomers)" label="Total Customers" trend="" [detail]="selectedRange().label + ' customer snapshot'" />
+    <app-kpi-card icon="✦" [value]="formatNumber(data.lifetimePointsIssued)" label="Points Issued" trend="" [detail]="'Points earned · ' + selectedRange().label" />
+    <app-kpi-card icon="●" [value]="formatNumber(data.outstandingPoints)" label="Outstanding Points" trend="" detail="Current customer balances" />
+    <app-kpi-card icon="◇" [value]="formatNumber(data.rewardsRedeemed)" label="Rewards Redeemed" trend="" [detail]="'Recorded redemptions · ' + selectedRange().label" />
+  </section>
+
+  <section class="analytics-grid">
+    <article class="panel activity-chart">
+      <header><span><b>Loyalty activity</b><small>Recorded transactions · {{ selectedRange().label }}</small></span><div class="legend"><i></i> Transactions</div></header>
+      @if (hasActivity()) {
+        <div class="chart" role="img" [attr.aria-label]="'Loyalty transactions for ' + selectedRange().label">
+          @for (point of data.activityTrend; track point.date; let index = $index) {
+            <span
+              tabindex="0"
+              [attr.aria-label]="formatChartDate(point.date) + ': ' + point.count + ' transactions'"
+              [attr.data-tooltip]="formatChartDate(point.date) + ' · ' + point.count + (point.count === 1 ? ' transaction' : ' transactions')"
+            ><i [style.height.%]="chartBars()[index]"></i></span>
+          }
+        </div>
+        <footer>
+          <span>{{ formatChartDate(data.activityTrend[0].date) }}</span>
+          <span>{{ formatChartDate(data.activityTrend[data.activityTrend.length - 1].date) }}</span>
+        </footer>
+      } @else {
+        <div class="panel-empty"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2" /></svg></span><b>No loyalty activity for {{ selectedRange().label.toLowerCase() }}.</b><p>Customer scans and point transactions will appear here as they happen.</p></div>
+      }
+    </article>
+
+    <article class="panel redemptions">
+      <header><span><b>Reward redemptions</b><small>Share of recorded redemptions</small></span></header>
+      @if (hasRedemptions()) {
+        <div class="donut" [style.background]="redemptionGradient()"><span><b>{{ formatNumber(data.rewardsRedeemed) }}</b><small>Total</small></span></div>
+        <ul>
+          @for (item of data.redemptionBreakdown; track item.name) {
+            <li><i></i><span>{{ item.name }}</span><b>{{ item.count }} · {{ item.percentage }}%</b></li>
+          }
+        </ul>
+      } @else {
+        <div class="panel-empty"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v10H4V12M2 7h20v5H2V7Zm10 15V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7Zm0 0h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z" /></svg></span><b>No redemptions for {{ selectedRange().label.toLowerCase() }}.</b><p>Reward performance will appear after a customer redeems their first reward.</p></div>
+      }
+    </article>
+
+    <article class="panel recent">
+      <header><span><b>Recent loyalty activity</b><small>Latest recorded customer transactions</small></span></header>
+      @if (data.recentActivity.length) {
+        @for (item of data.recentActivity; track item.id) {
+          <div class="activity-row">
+            <i class="activity-avatar" [style.background]="tone(item.customerId)">{{ initials(item.customerName) }}</i>
+            <span><b>{{ item.customerName }}</b><small><em [class.redeem]="item.type === 'Redeem'">{{ activityLabel(item) }}</em>{{ item.reason }}</small></span>
+            <strong [class.redeem]="item.type === 'Redeem'">{{ signedPoints(item) }}</strong>
+            <time [attr.title]="formatDate(item.createdAt)">{{ formatDate(item.createdAt) }}</time>
+          </div>
+        }
+      } @else {
+        <div class="panel-empty"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg></span><b>No recent activity for this period.</b><p>Point earnings and reward redemptions will appear after customers interact with your loyalty program.</p></div>
+      }
+    </article>
+
+    <article class="panel rewards">
+      <header><span><b>Top rewards</b><small>Ranked by real redemptions</small></span></header>
+      @if (topRewards().length) {
+        @for (reward of topRewards(); track reward.id; let rank = $index) {
+          <div class="reward-row">
+            <i>{{ rank + 1 }}</i>
+            <span><b>{{ reward.name }}</b><small>{{ reward.requiredPoints.toLocaleString() }} points · Redeemed {{ reward.redemptions }} {{ reward.redemptions === 1 ? 'time' : 'times' }}</small><em><span [style.width.%]="rewardProgress(reward.redemptions)"></span></em></span>
+            <strong>{{ reward.redemptions }}</strong>
+          </div>
+        }
+      } @else {
+        <div class="panel-empty"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" /></svg></span><b>No top rewards for this period.</b><p>Rankings will appear once customers start redeeming available rewards.</p></div>
+      }
+    </article>
+  </section>
+}

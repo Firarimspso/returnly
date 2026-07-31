@@ -10,7 +10,8 @@ public sealed class DashboardAnalyticsRepository(ReturnlyDbContext dbContext)
 {
     public async Task<DashboardAnalyticsSnapshot> GetAsync(
         Guid restaurantId,
-        DateTimeOffset activityFrom,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
         CancellationToken cancellationToken = default)
     {
         var restaurantName = await dbContext.Restaurants
@@ -22,26 +23,38 @@ public sealed class DashboardAnalyticsRepository(ReturnlyDbContext dbContext)
         var customers = dbContext.Customers
             .AsNoTracking()
             .Where(customer => customer.RestaurantId == restaurantId);
+        if (from.HasValue) customers = customers.Where(customer => customer.CreatedAt >= from.Value);
+        if (to.HasValue) customers = customers.Where(customer => customer.CreatedAt < to.Value);
         var totalCustomers = await customers.CountAsync(cancellationToken);
-        var outstandingPoints = await customers
-            .Select(customer => (long)customer.CurrentPoints)
-            .SumAsync(cancellationToken);
-        var lifetimePointsIssued = await customers
-            .Select(customer => (long)customer.LifetimePoints)
-            .SumAsync(cancellationToken);
 
         var rewards = await dbContext.Rewards
             .AsNoTracking()
             .Where(reward => reward.RestaurantId == restaurantId)
             .OrderBy(reward => reward.Name)
             .ToListAsync(cancellationToken);
-        var activeRewards = rewards.Count(reward => reward.IsActive);
+        var activeRewardsQuery = dbContext.Rewards
+            .AsNoTracking()
+            .Where(reward => reward.RestaurantId == restaurantId && reward.IsActive);
+        if (from.HasValue) activeRewardsQuery = activeRewardsQuery.Where(reward => reward.CreatedAt >= from.Value);
+        if (to.HasValue) activeRewardsQuery = activeRewardsQuery.Where(reward => reward.CreatedAt < to.Value);
+        var activeRewards = await activeRewardsQuery.CountAsync(cancellationToken);
 
         var transactions = dbContext.PointTransactions
             .AsNoTracking()
             .Where(transaction => transaction.RestaurantId == restaurantId);
+        if (from.HasValue) transactions = transactions.Where(transaction => transaction.CreatedAt >= from.Value);
+        if (to.HasValue) transactions = transactions.Where(transaction => transaction.CreatedAt < to.Value);
+        var earnedPoints = await transactions
+            .Where(transaction => transaction.Type == PointTransactionType.Earn)
+            .Select(transaction => (long)transaction.Points)
+            .SumAsync(cancellationToken);
+        var redeemedPoints = await transactions
+            .Where(transaction => transaction.Type == PointTransactionType.Redeem)
+            .Select(transaction => (long)transaction.Points)
+            .SumAsync(cancellationToken);
+        var outstandingPoints = earnedPoints - redeemedPoints;
+        var lifetimePointsIssued = earnedPoints;
         var activityDates = await transactions
-            .Where(transaction => transaction.CreatedAt >= activityFrom)
             .Select(transaction => transaction.CreatedAt)
             .ToListAsync(cancellationToken);
         var recentActivity = await transactions

@@ -1,66 +1,224 @@
-<main class="scan-page">
-  <header class="brand">
-    <a href="/" aria-label="Returnly home"><span>R</span><b>Returnly</b></a>
-    <div><small>REWARDS AT</small><strong>{{ restaurantName() }}</strong></div>
+<main class="scan-page" [style.--scan-brand]="qrCode()?.primaryBrandColor || result()?.primaryBrandColor || '#6952e8'">
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="returnly-brand">
+    <a href="/" aria-label="Returnly home">
+      <span class="returnly-mark"><i></i></span>
+      <b>Returnly</b>
+    </a>
+    <span>LOYALTY, MADE SIMPLE</span>
   </header>
 
-  <section class="scan-card">
+  <section class="experience-card" [class.success-card]="state() === 'success'">
+    <div class="restaurant-brand">
+      <span class="restaurant-logo">
+        @if (qrCode()?.restaurantLogoUrl || result()?.restaurantLogoUrl; as logo) { <img [src]="logo" alt="" /> }
+        @else { {{ restaurantInitials() }} }
+      </span>
+      <div>
+        <small>WELCOME TO</small>
+        <strong>{{ restaurantName() }}</strong>
+      </div>
+    </div>
+
     @switch (state()) {
-      @case ('success') {
-        @if (result(); as scan) {
-          <div class="result success">
-            <div class="status-icon"><span>✓</span></div>
-            <p class="eyebrow">POINTS ADDED</p>
-            <h1>You're all set, {{ scan.customerFirstName }}!</h1>
-            <p>Your visit has been recorded and your loyalty balance is updated.</p>
-            <div class="points-earned"><small>YOU EARNED</small><strong>+{{ scan.pointsAwarded.toLocaleString() }}</strong><span>points</span></div>
-            <div class="balance"><span><small>Current balance</small><b>{{ scan.currentPoints.toLocaleString() }} points</b></span><i>✦</i></div>
-            <a class="primary-action" href="/">Done</a>
+      @case ('validating') {
+        <div class="loading-state" aria-live="polite">
+          <div class="loader-orbit"><span></span><i>✦</i></div>
+          <p class="overline">SECURE REWARDS CHECK</p>
+          <h1>Checking your QR code</h1>
+          <p>Just a moment while we make sure this loyalty code is ready to use.</p>
+          <div class="loading-steps"><i></i><i></i><i></i></div>
+        </div>
+      }
+
+      @case ('requesting-code') {
+        <div class="loading-state processing" aria-live="polite">
+          <div class="loader-orbit"><span></span><i>✦</i></div>
+          <p class="overline">SECURE SIGN IN</p>
+          <h1>Sending your code</h1>
+          <p>We’re preparing a one-time verification code for your rewards profile.</p>
+          <div class="loading-steps"><i></i><i></i><i></i></div>
+        </div>
+      }
+
+      @case ('verifying') {
+        <div class="loading-state processing" aria-live="polite">
+          <div class="loader-orbit"><span></span><i>✦</i></div>
+          <p class="overline">VERIFYING SECURELY</p>
+          <h1>Checking your code</h1>
+          <p>One moment while we verify your identity and add today’s points.</p>
+          <div class="loading-steps"><i></i><i></i><i></i></div>
+        </div>
+      }
+
+      @case ('submitting') {
+        <div class="loading-state processing" aria-live="polite">
+          <div class="loader-orbit"><span></span><i>✦</i></div>
+          <p class="overline">ADDING YOUR POINTS</p>
+          <h1>Recording your visit</h1>
+          <p>We found your profile. Your new loyalty balance will be ready in a second.</p>
+          <div class="loading-steps"><i></i><i></i><i></i></div>
+        </div>
+      }
+
+      @case ('verify') {
+        @if (challenge(); as verification) {
+          <div class="verify-state">
+            <div class="verification-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-3.8 8-10V5l-8-3-8 3v7c0 6.2 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <p class="overline">CHECK YOUR EMAIL</p>
+            <h1>Enter your 6-digit code</h1>
+            <p class="lead">We sent a one-time code to <strong>{{ verification.maskedDestination }}</strong></p>
+
+            <div class="otp-fields" role="group" aria-label="Six digit verification code" (paste)="pasteOtp($event)">
+              @for (digit of otpDigits(); track $index) {
+                <input
+                  class="otp-input"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  maxlength="1"
+                  [value]="digit"
+                  [attr.aria-label]="'Verification digit ' + ($index + 1)"
+                  (input)="updateOtpDigit($index, $event)"
+                  (keydown)="otpKeydown($index, $event)"
+                />
+              }
+            </div>
+
+            @if (errorMessage()) {
+              <p class="inline-error verify-error" role="alert"><i>!</i>{{ errorMessage() }}</p>
+            }
+
+            <p class="code-expiry">
+              @if (secondsUntilExpiry() > 0) {
+                Code expires in <strong>{{ expiryLabel() }}</strong>
+              } @else {
+                This code has expired. Request a new one.
+              }
+            </p>
+
+            <button class="primary-action" type="button" [disabled]="verificationCode().length !== 6 || secondsUntilExpiry() === 0" (click)="verifyCode()">
+              Verify and add points <span>→</span>
+            </button>
+
+            <div class="verification-actions">
+              <button type="button" (click)="resendCode()" [disabled]="secondsUntilResend() > 0 || resendPending()">
+                @if (resendPending()) {
+                  Sending…
+                } @else if (secondsUntilResend() > 0) {
+                  Resend in {{ secondsUntilResend() }}s
+                } @else {
+                  Resend code
+                }
+              </button>
+              <span aria-hidden="true">·</span>
+              <button type="button" (click)="changeIdentifier()">Change email</button>
+            </div>
           </div>
         }
       }
+
+      @case ('success') {
+        @if (result(); as scan) {
+          <div class="success-state">
+            <div class="celebration" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <div class="success-seal"><span>✓</span></div>
+            <p class="overline">POINTS ADDED</p>
+            <h1>Nice one, {{ scan.customerFirstName }}!</h1>
+            <p class="lead">Your visit counts. Those points are now safely in your rewards balance.</p>
+
+            <div class="earned-card">
+              <small>YOU JUST EARNED</small>
+              <div><strong>+{{ displayedPointsAwarded().toLocaleString() }}</strong><span>points</span></div>
+              <p>One step closer to your next reward.</p>
+            </div>
+
+            <div class="balance-card">
+              <span><small>YOUR NEW BALANCE</small><b>{{ displayedBalance().toLocaleString() }} points</b></span>
+              <i>✦</i>
+            </div>
+
+            <a class="primary-action reward-action" routerLink="/rewards">See what you can unlock <span>→</span></a>
+            <a class="quiet-action" href="/">Done for now</a>
+          </div>
+        }
+      }
+
       @case ('error') {
-        <div class="result error-result">
-          <div class="status-icon"><span>!</span></div>
-          <p class="eyebrow">WE COULDN'T COMPLETE THAT</p>
-          <h1>Let's get you sorted</h1>
-          <p>{{ errorMessage() }}</p>
-          <button class="primary-action" type="button" (click)="tryAgain()">Try again</button>
+        <div class="error-state" [attr.data-kind]="errorKind()">
+          <div class="error-illustration">
+            <span>{{ errorIcon() }}</span>
+            <i></i>
+          </div>
+          <p class="overline">LET’S GET YOU SORTED</p>
+          <h1>{{ errorTitle() }}</h1>
+          <p class="lead">{{ errorMessage() }}</p>
+
+          <div class="help-card">
+            <i>i</i>
+            <span><b>Need a hand?</b><small>The restaurant team can help you find another active rewards code.</small></span>
+          </div>
+
+          <button class="primary-action" type="button" (click)="tryAgain()">Try again <span>↻</span></button>
+          <a class="quiet-action" href="/">Return to Returnly</a>
         </div>
       }
-      @case ('validating') {
-        <div class="result validating">
-          <div class="loading"><i></i><span>Checking your QR code…</span></div>
-          <h1>Just a moment</h1>
-          <p>We’re securely validating this rewards code.</p>
-        </div>
-      }
+
       @default {
-        <div class="intro">
-          <span class="scan-mark">⌗</span>
-          <p class="eyebrow">SCAN. EARN. ENJOY.</p>
-          <h1>Claim your loyalty points</h1>
-          <p>Enter the phone number or email connected to your rewards profile to earn {{ qrCode()?.pointsPerScan || 0 }} points.</p>
-        </div>
+        <div class="identify-state">
+          <div class="welcome-mark">✦</div>
+          <p class="overline">SCAN · EARN · ENJOY</p>
+          <h1>Welcome to {{ restaurantName() }}.</h1>
+          <p class="lead">{{ qrCode()?.restaurantDescription || 'Let’s find your rewards profile and add today’s loyalty points.' }}</p>
 
-        <div class="identify">
-          <label>
-            <span>Phone number or email</span>
-            <div class="search-box"><i>♙</i><input type="text" autocomplete="email" placeholder="Phone number or email..." [ngModel]="identifier()" (ngModelChange)="identifier.set($event); errorMessage.set('')" /></div>
-          </label>
+          <div class="points-preview">
+            <i>✦</i>
+            <span><small>THIS VISIT IS WORTH</small><b>+{{ qrCode()?.pointsPerScan || 0 }} points</b></span>
+          </div>
 
-          @if (errorMessage() && state() === 'identify') {
-            <p class="inline-error" role="alert">{{ errorMessage() }}</p>
-          }
+          <div class="identify-form">
+            <div class="identifier-tabs" role="group" aria-label="Choose how to find your rewards profile">
+              <button type="button" disabled aria-disabled="true">
+                <i>⌕</i><span><b>Phone</b><small>SMS coming soon</small></span>
+              </button>
+              <button type="button" [class.active]="identifierMode() === 'email'" [attr.aria-pressed]="identifierMode() === 'email'" (click)="selectIdentifierMode('email')">
+                <i>@</i><span><b>Email</b><small>Rewards email</small></span>
+              </button>
+            </div>
 
-          <button class="primary-action" type="button" [disabled]="!identifier().trim() || state() === 'submitting'" (click)="submit()">
-            {{ state() === 'submitting' ? 'Adding your points…' : 'Claim my points' }}
-          </button>
-          <p class="privacy">Your information is used only to find your Returnly rewards profile.</p>
+            <label for="customer-identifier">{{ identifierMode() === 'phone' ? 'Mobile number' : 'Email address' }}</label>
+            <div class="identifier-field" [class.invalid]="errorMessage()">
+              <span>{{ identifierMode() === 'phone' ? '☎' : '@' }}</span>
+              <input
+                id="customer-identifier"
+                [type]="identifierMode() === 'phone' ? 'tel' : 'email'"
+                [attr.inputmode]="identifierMode() === 'phone' ? 'tel' : 'email'"
+                [attr.autocomplete]="identifierMode() === 'phone' ? 'tel' : 'email'"
+                [placeholder]="identifierMode() === 'phone' ? '70 123 456' : 'you@email.com'"
+                [ngModel]="identifier()"
+                (ngModelChange)="identifier.set($event); errorMessage.set('')"
+              />
+            </div>
+
+            @if (errorMessage()) {
+              <p class="inline-error" role="alert"><i>!</i>{{ errorMessage() }}</p>
+            }
+
+            <button class="primary-action" type="button" [disabled]="!identifier().trim()" (click)="submit()">
+              Add {{ qrCode()?.pointsPerScan || 0 }} points <span>→</span>
+            </button>
+            <p class="privacy"><i>⌾</i>Your details are only used to find your rewards account.</p>
+          </div>
         </div>
       }
     }
   </section>
 
-  <footer>Powered by <b>Returnly</b> · Loyalty made simple</footer>
+  <footer class="powered-by">Powered by <b>Returnly</b><span></span>Secure loyalty rewards</footer>
 </main>

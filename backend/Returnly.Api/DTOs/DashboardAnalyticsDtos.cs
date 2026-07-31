@@ -2,6 +2,14 @@ using Returnly.Api.Entities;
 
 namespace Returnly.Api.DTOs;
 
+public enum DashboardPeriod
+{
+    Today,
+    Last7Days,
+    Last30Days,
+    AllTime,
+}
+
 public sealed record DashboardAnalyticsDto(
     string RestaurantName,
     int TotalCustomers,

@@ -1,0 +1,174 @@
+.preview-body {
+  padding: 18px;
+  background: linear-gradient(150deg, #f8f7fb, #efecf8);
+}
+
+.print-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+  padding: 20px 17px 14px;
+  overflow: hidden;
+  border: 1px solid rgba(90, 75, 137, .12);
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 16px 38px rgba(40, 31, 67, .11);
+}
+
+.print-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: var(--restaurant-brand);
+  content: '';
+}
+
+.restaurant {
+  align-self: flex-start;
+  margin-bottom: 14px;
+}
+
+.restaurant > span {
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 10px;
+  font-size: 9px;
+}
+
+.restaurant > span img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.restaurant b { font-size: 10px; }
+.restaurant small { color: var(--restaurant-brand); font-size: 6px; }
+
+.type-badge {
+  position: absolute;
+  top: 23px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  color: #654fc9;
+  background: #f0edff;
+  font-size: 7px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.type-badge[data-type='Table'] { color: #2e765e; background: #e9f6f0; }
+.type-badge[data-type='Receipt'] { color: #94641c; background: #fff2da; }
+
+.print-card h2 {
+  max-width: 230px;
+  margin: 2px 0 2px;
+  overflow: hidden;
+  color: #29242f;
+  font: 800 14px 'Manrope', sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reward-headline {
+  margin: 0 0 12px;
+  color: #77717e;
+  font-size: 8px;
+  font-weight: 650;
+}
+
+.print-card .qr-frame {
+  padding: 8px;
+  border: 1px solid #ece9ef;
+  border-radius: 14px;
+  box-shadow: 0 9px 24px rgba(39, 31, 60, .09);
+}
+
+.print-card .qr-grid {
+  width: 166px;
+  height: 166px;
+  padding: 4px;
+}
+
+.points-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 13px;
+  padding: 6px 10px;
+  border-radius: 99px;
+  color: var(--restaurant-brand);
+  background: color-mix(in srgb, var(--restaurant-brand) 10%, #fff);
+}
+
+.points-badge strong { font-size: 12px; }
+.points-badge span { font-size: 7px; font-weight: 700; }
+
+.scan-instruction {
+  max-width: 220px;
+  margin: 9px 0 13px;
+  color: #817b88;
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.print-card > footer {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 3px;
+  padding-top: 11px;
+  border-top: 1px solid #efedf1;
+  color: #a09aa6;
+  font-size: 6px;
+}
+
+.print-card > footer b {
+  color: #5e49c8;
+  font-size: inherit;
+}
+
+.detail-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.preview-panel > footer button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: border-color .18s ease, color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.preview-panel > footer button:hover {
+  border-color: #b8acee;
+  color: #5942c9;
+  background: #f7f5ff;
+  transform: translateY(-1px);
+}
+
+.preview-panel > footer .download:hover {
+  color: #fff;
+  background: #5942cf;
+  box-shadow: 0 7px 16px rgba(105, 82, 232, .2);
+}
+
+.preview-panel > footer svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

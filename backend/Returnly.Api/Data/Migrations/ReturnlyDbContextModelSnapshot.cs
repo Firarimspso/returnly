@@ -17,7 +17,7 @@ namespace Returnly.Api.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.14")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -94,6 +94,122 @@ namespace Returnly.Api.Data.Migrations
                     b.HasIndex("RestaurantId", "PhoneNumber");
 
                     b.ToTable("customers", (string)null);
+                });
+
+            modelBuilder.Entity("Returnly.Api.Entities.CustomerLoginChallenge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<int>("ResendCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("SelectionExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SelectionTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SelectionTokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("NormalizedEmail", "CreatedAt");
+
+                    b.ToTable("customer_login_challenges", (string)null);
+                });
+
+            modelBuilder.Entity("Returnly.Api.Entities.CustomerVerificationChallenge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<Guid>("QrCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ResendCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QrCodeId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.HasIndex("RestaurantId", "NormalizedIdentifier", "CreatedAt");
+
+                    b.ToTable("customer_verification_challenges", (string)null);
                 });
 
             modelBuilder.Entity("Returnly.Api.Entities.PointTransaction", b =>
@@ -262,6 +378,65 @@ namespace Returnly.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Returnly.Api.Entities.RedemptionRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConfirmationCode")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConfirmedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RewardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmationCode")
+                        .IsUnique();
+
+                    b.HasIndex("ConfirmedByUserId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("RewardId");
+
+                    b.HasIndex("RestaurantId", "CustomerId", "CreatedAt");
+
+                    b.HasIndex("RestaurantId", "Status", "ExpiresAt");
+
+                    b.ToTable("redemption_requests", (string)null);
+                });
+
             modelBuilder.Entity("Returnly.Api.Entities.Restaurant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -272,6 +447,15 @@ namespace Returnly.Api.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("BusinessHours")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}");
+
+                    b.Property<string>("CoverImageUrl")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -281,13 +465,28 @@ namespace Returnly.Api.Data.Migrations
                         .HasColumnType("character(3)")
                         .IsFixedLength();
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
 
+                    b.Property<string>("Facebook")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Instagram")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -297,6 +496,13 @@ namespace Returnly.Api.Data.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<string>("PrimaryBrandColor")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasDefaultValue("#6952E8");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -310,6 +516,10 @@ namespace Returnly.Api.Data.Migrations
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.HasKey("Id");
 
@@ -326,14 +536,31 @@ namespace Returnly.Api.Data.Migrations
                         {
                             Id = new Guid("2d1b09d7-76ed-4af2-8ea1-3d2036837a01"),
                             Address = "214 Maple Street, Portland, OR 97205",
+                            BusinessHours = "{}",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 7, 24, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "USD",
                             Email = "hello@solemaple.com",
                             IsActive = true,
                             Name = "Solé & Maple",
                             PhoneNumber = "+1 (503) 555-0142",
+                            PrimaryBrandColor = "#6952E8",
                             Slug = "sole-maple",
                             TimeZone = "America/Los_Angeles"
+                        },
+                        new
+                        {
+                            Id = new Guid("8c0f7be8-6385-4b45-9161-d330092c7602"),
+                            Address = "Mar Mikhael, Beirut, Lebanon",
+                            BusinessHours = "{}",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 7, 24, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Currency = "USD",
+                            Email = "hello@cedarplate.com",
+                            IsActive = true,
+                            Name = "Cedar & Plate",
+                            PhoneNumber = "+961 1 555 019",
+                            PrimaryBrandColor = "#6952E8",
+                            Slug = "cedar-plate",
+                            TimeZone = "Asia/Beirut"
                         });
                 });
 
@@ -466,6 +693,18 @@ namespace Returnly.Api.Data.Migrations
                             PasswordHash = "$2y$12$sSxHWN7yLGI1iFuDwG7Que3FL6OBQSuVtS1.J4Vkx37v.ETeSVYrC",
                             RestaurantId = new Guid("2d1b09d7-76ed-4af2-8ea1-3d2036837a01"),
                             Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("67557f80-fd28-476d-99df-bd0cf87e52d5"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 7, 24, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Email = "admin@cedarplate.com",
+                            FirstName = "Maya",
+                            IsActive = true,
+                            LastName = "Haddad",
+                            PasswordHash = "$2y$12$sSxHWN7yLGI1iFuDwG7Que3FL6OBQSuVtS1.J4Vkx37v.ETeSVYrC",
+                            RestaurantId = new Guid("8c0f7be8-6385-4b45-9161-d330092c7602"),
+                            Role = "Admin"
                         });
                 });
 
@@ -476,6 +715,25 @@ namespace Returnly.Api.Data.Migrations
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Restaurant");
+                });
+
+            modelBuilder.Entity("Returnly.Api.Entities.CustomerVerificationChallenge", b =>
+                {
+                    b.HasOne("Returnly.Api.Entities.QrCode", "QrCode")
+                        .WithMany("CustomerVerificationChallenges")
+                        .HasForeignKey("QrCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Returnly.Api.Entities.Restaurant", "Restaurant")
+                        .WithMany("CustomerVerificationChallenges")
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("QrCode");
 
                     b.Navigation("Restaurant");
                 });
@@ -544,6 +802,40 @@ namespace Returnly.Api.Data.Migrations
                     b.Navigation("Restaurant");
                 });
 
+            modelBuilder.Entity("Returnly.Api.Entities.RedemptionRequest", b =>
+                {
+                    b.HasOne("Returnly.Api.Entities.User", "ConfirmedByUser")
+                        .WithMany()
+                        .HasForeignKey("ConfirmedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Returnly.Api.Entities.Customer", "Customer")
+                        .WithMany("RedemptionRequests")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Returnly.Api.Entities.Restaurant", "Restaurant")
+                        .WithMany("RedemptionRequests")
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Returnly.Api.Entities.Reward", "Reward")
+                        .WithMany("RedemptionRequests")
+                        .HasForeignKey("RewardId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ConfirmedByUser");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Restaurant");
+
+                    b.Navigation("Reward");
+                });
+
             modelBuilder.Entity("Returnly.Api.Entities.Reward", b =>
                 {
                     b.HasOne("Returnly.Api.Entities.Restaurant", "Restaurant")
@@ -571,10 +863,14 @@ namespace Returnly.Api.Data.Migrations
                     b.Navigation("PointTransactions");
 
                     b.Navigation("QrCodeScans");
+
+                    b.Navigation("RedemptionRequests");
                 });
 
             modelBuilder.Entity("Returnly.Api.Entities.QrCode", b =>
                 {
+                    b.Navigation("CustomerVerificationChallenges");
+
                     b.Navigation("PointTransactions");
 
                     b.Navigation("Scans");
@@ -582,6 +878,8 @@ namespace Returnly.Api.Data.Migrations
 
             modelBuilder.Entity("Returnly.Api.Entities.Restaurant", b =>
                 {
+                    b.Navigation("CustomerVerificationChallenges");
+
                     b.Navigation("Customers");
 
                     b.Navigation("PointTransactions");
@@ -590,9 +888,16 @@ namespace Returnly.Api.Data.Migrations
 
                     b.Navigation("QrCodes");
 
+                    b.Navigation("RedemptionRequests");
+
                     b.Navigation("Rewards");
 
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("Returnly.Api.Entities.Reward", b =>
+                {
+                    b.Navigation("RedemptionRequests");
                 });
 #pragma warning restore 612, 618
         }

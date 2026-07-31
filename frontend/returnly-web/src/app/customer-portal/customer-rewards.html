@@ -1,0 +1,149 @@
+<main class="rewards-page" [style.--portal-brand]="portal()?.primaryBrandColor || '#6952e8'">
+  <div class="rewards-ambient one"></div><div class="rewards-ambient two"></div>
+
+  <header class="portal-brand">
+    <a href="/" aria-label="Returnly home"><span><i></i></span><b>Returnly</b></a>
+    @if (portal()) {
+      <div class="customer-account">
+        <button class="customer-account-trigger" type="button" aria-label="Open customer account menu" [attr.aria-expanded]="accountMenuOpen()" (click)="toggleAccountMenu()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/></svg>
+          <span>{{ portal()?.customerFirstName }}</span>
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+        </button>
+        @if (accountMenuOpen()) {
+          <nav class="customer-account-menu" aria-label="Customer account">
+            <button type="button" (click)="goToSection('my-rewards')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2V7Zm10 14V7M12 7H7.5a2.5 2.5 0 1 1 2.4-3.2L12 7Zm0 0h4.5a2.5 2.5 0 1 0-2.4-3.2L12 7Z"/></svg><span>My rewards</span></button>
+            <button type="button" (click)="goToSection('recent-activity')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5l3 2M3.1 9a9 9 0 1 1 .4 7M3 4v5h5"/></svg><span>Recent activity</span></button>
+            @if (hasMultipleMemberships()) {
+              <button type="button" [disabled]="signingOut()" (click)="endCustomerSession(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h12M16 3l4 4-4 4M16 17H4m4-4-4 4 4 4"/></svg><span>Switch restaurant</span></button>
+            }
+            <span class="account-menu-divider"></span>
+            <button type="button" [disabled]="signingOut()" (click)="endCustomerSession(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm10-3v6m-3-3h6"/></svg><span>Switch account</span></button>
+            <button class="account-logout" type="button" [disabled]="signingOut()" (click)="endCustomerSession()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m12-9h5v18h-5"/></svg><span>{{ signingOut() ? 'Logging out…' : 'Log out' }}</span></button>
+          </nav>
+        }
+      </div>
+    } @else {
+      <small>MY REWARDS</small>
+    }
+  </header>
+
+  @if (loading()) {
+    <section class="portal-state" aria-live="polite">
+      <div class="reward-loader"><i>✦</i></div>
+      <h1>Opening your rewards</h1>
+      <p>Getting your balance and rewards ready.</p>
+      <div class="portal-loading-cards" aria-hidden="true"><i></i><i></i><i></i></div>
+    </section>
+  } @else if (!portal()) {
+    <section class="portal-state error">
+      <span>⌁</span><p class="eyebrow">REWARDS SESSION ENDED</p>
+      <h1>Scan to get back to your rewards</h1>
+      <p>{{ errorMessage() }}</p>
+      <a routerLink="/my-rewards">Sign in to your rewards <i>→</i></a>
+    </section>
+  } @else if (portal(); as data) {
+    <section class="restaurant-strip" id="my-rewards">
+      <span>@if (data.restaurantLogoUrl) { <img [src]="data.restaurantLogoUrl" alt="" /> } @else { {{ restaurantInitials() }} }</span>
+      <div><small>REWARDS AT</small><b>{{ data.restaurantName }}</b></div>
+      <i>✦</i>
+    </section>
+
+    <section class="balance-hero" [style.background-image]="data.restaurantCoverImageUrl ? 'linear-gradient(135deg, rgba(45,39,55,.94), rgba(71,61,105,.86)), url(' + data.restaurantCoverImageUrl + ')' : null" [style.background-size]="data.restaurantCoverImageUrl ? 'cover' : null" [style.background-position]="data.restaurantCoverImageUrl ? 'center' : null">
+      <div class="balance-copy">
+        <p class="eyebrow">WELCOME BACK, {{ data.customerFirstName.toUpperCase() }}</p>
+        <h1>Your next reward is getting closer.</h1>
+        <p>{{ data.restaurantDescription || 'Keep visiting, earning, and unlocking something worth coming back for.' }}</p>
+      </div>
+      <div class="balance-orb">
+        <small>YOUR BALANCE</small>
+        <strong>{{ displayedBalance().toLocaleString() }}</strong>
+        <span>points</span>
+      </div>
+    </section>
+
+    @if (errorMessage()) {
+      <div class="portal-alert" role="alert"><i>!</i><span>{{ errorMessage() }}</span></div>
+    }
+
+    <section class="portal-section ready-rewards">
+      <header><span><p class="eyebrow">READY TO REDEEM</p><h2>Your unlocked rewards</h2><em>Choose a reward and show the code to restaurant staff.</em></span><small>{{ unlockedRewards().length }} ready</small></header>
+      @if (unlockedRewards().length) {
+        <div class="reward-grid">
+          @for (reward of unlockedRewards(); track reward.id) {
+            <article class="reward-card unlocked">
+              <div class="reward-top"><i [style.background]="reward.color || null"><app-reward-visual-icon [icon]="reward.icon" /></i><span>Ready</span></div>
+              <h3>{{ reward.name }}</h3><p>{{ reward.description }}</p>
+              <footer><b>✦ {{ reward.requiredPoints.toLocaleString() }} points</b><button type="button" [disabled]="requestingRewardId() === reward.id" (click)="requestReward(reward)">{{ requestingRewardId() === reward.id ? 'Preparing…' : 'Redeem' }}</button></footer>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="portal-empty"><span>◇</span><b>No rewards ready just yet.</b><p>Your progress is saved—keep earning and your next treat will appear here.</p></div>
+      }
+    </section>
+
+    @if (lockedRewards().length) {
+      <section class="portal-section earning-rewards">
+        <header><span><p class="eyebrow">KEEP EARNING</p><h2>Rewards you’re working toward</h2><em>Every visit moves you closer.</em></span></header>
+        <div class="reward-grid">
+          @for (reward of lockedRewards(); track reward.id) {
+            <article class="reward-card locked">
+              <div class="reward-top"><i [style.background]="reward.color || null"><app-reward-visual-icon [icon]="reward.icon" /></i><span>{{ reward.pointsRemaining.toLocaleString() }} points away</span></div>
+              <h3>{{ reward.name }}</h3><p>{{ reward.description }}</p>
+              <div class="progress"><span><i [style.width.%]="reward.progressPercentage"></i></span><small>{{ reward.progressPercentage }}%</small></div>
+              <footer><b>{{ data.currentPoints.toLocaleString() }} / {{ reward.requiredPoints.toLocaleString() }}</b><button type="button" disabled>Locked</button></footer>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="history-grid">
+      <article class="history-card" id="recent-activity">
+        <header><span><p class="eyebrow">POINTS</p><h2>Recent activity</h2></span></header>
+        @if (data.recentTransactions.length) {
+          @for (item of data.recentTransactions; track item.id) {
+            <div class="history-row">
+              <i [class.redeem]="item.type === 'Redeem'">{{ item.type === 'Earn' ? '✦' : '◇' }}</i>
+              <span><b>{{ transactionLabel(item.type, item.reason) }}</b><small>{{ formatDate(item.createdAt) }}</small></span>
+              <strong [class.redeem]="item.type === 'Redeem'">{{ item.type === 'Earn' ? '+' : '−' }}{{ item.points.toLocaleString() }}</strong>
+            </div>
+          }
+        } @else {
+          <div class="portal-empty small"><span>◷</span><b>No point history yet.</b><p>Your activity will appear after your first visit.</p></div>
+        }
+      </article>
+
+      <article class="history-card">
+        <header><span><p class="eyebrow">REWARDS</p><h2>Previous redemptions</h2></span></header>
+        @if (data.previousRedemptions.length) {
+          @for (item of data.previousRedemptions; track item.id) {
+            <div class="history-row redemption">
+              <i>◇</i><span><b>{{ item.rewardName }}</b><small>{{ formatDate(item.requestedAt) }}</small></span>
+              <em [attr.data-status]="item.status">{{ statusLabel(item.status) }}</em>
+            </div>
+          }
+        } @else {
+          <div class="portal-empty small"><span>◇</span><b>No redemptions yet.</b><p>Your redeemed rewards will be kept here.</p></div>
+        }
+      </article>
+    </section>
+
+    <footer class="portal-footer">Powered by <b>Returnly</b><span></span>Your points stay with {{ data.restaurantName }}</footer>
+  }
+</main>
+
+@if (redemptionRequest(); as request) {
+  <div class="redemption-backdrop">
+    <section class="redemption-sheet" role="dialog" aria-modal="true" aria-labelledby="redemption-title">
+      <div class="code-seal">✓</div>
+      <p class="eyebrow">READY TO REDEEM</p>
+      <h2 id="redemption-title">{{ request.rewardName }}</h2>
+      <p>Show this one-time code to restaurant staff. Your points are only deducted after they confirm it.</p>
+      <div class="redemption-code" [class.expired]="redemptionSecondsRemaining() === 0"><small>SHOW THIS CODE TO STAFF</small><strong>{{ request.confirmationCode }}</strong><span class="countdown">{{ redemptionCountdown() }}</span><em>Expires {{ formatDate(request.expiresAt) }}</em></div>
+      <div class="staff-note"><i>i</i><span><b>Keep this screen open</b><small>The code works once. Your points are deducted only after staff confirms it.</small></span></div>
+      <button type="button" (click)="closeRedemption()">Done</button>
+    </section>
+  </div>
+}

@@ -1,5 +1,4 @@
-.period { padding: 9px 12px; border: 1px solid #e4e2e9; border-radius: 8px; color: #6e6975; background: #fff; font-size: 10px; }
-.period span { margin-left: 14px; }
+app-overview-page {
 .kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
 .charts { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(230px,.75fr); gap: 14px; margin-top: 14px; }
 .panel { border: 1px solid #e9e8ee; border-radius: 12px; background: #fff; }
@@ -33,5 +32,7 @@
 .activity-row{min-height:54px;border-top:1px solid #f2f0f4;font-size:8px}.activity-row>span{display:flex;flex-direction:column}.activity-row small{margin-top:3px;color:#9995a0}.person{flex-direction:row!important;align-items:center}
 .person i{display:grid;width:27px;height:27px;margin-right:8px;place-items:center;border-radius:7px;color:#fff;font-size:7px;font-style:normal}.activity-row time{color:#9995a0}
 .reward{display:flex;align-items:center;padding:12px 18px;border-top:1px solid #f1eff3}.reward>i{display:grid;width:33px;height:33px;place-items:center;border-radius:8px;color:#6952e8;background:#f0edff;font-style:normal}.reward span{display:flex;flex:1;flex-direction:column;margin-left:9px}.reward b{font-size:9px}.reward small{margin-top:3px;color:#9995a0;font-size:8px}.reward strong{font-size:11px}
+.dashboard-state{display:flex;min-height:150px;align-items:center;justify-content:center;gap:14px;padding:28px;border:1px solid #e9e8ee;border-radius:12px;background:#fff;text-align:left}.dashboard-state.compact{min-height:110px}.dashboard-state>span{display:grid;width:38px;height:38px;place-items:center;border-radius:10px;color:#6952e8;background:#f0edff;font-weight:800}.dashboard-state b{font-size:14px}.dashboard-state p{margin:5px 0 0;color:#77727e;font-size:13px}.dashboard-state.error>span{color:#b75252;background:#fff0ef}.state-spinner{border:3px solid #e1dcfb;border-top-color:#6952e8;border-radius:50%!important;background:transparent!important;animation:spin .8s linear infinite}.panel-empty{display:flex;min-height:190px;align-items:center;justify-content:center;flex-direction:column;padding:26px;text-align:center}.panel-empty>span{display:grid;width:42px;height:42px;place-items:center;margin-bottom:12px;border-radius:12px;color:#6952e8;background:#f0edff;font-size:18px}.panel-empty b{font-size:14px}.panel-empty p{max-width:310px;margin:6px 0 0;color:#77727e;font-size:13px;line-height:1.5}.activity .panel-empty,.top-rewards .panel-empty{min-height:180px}@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.redemption{display:grid;grid-template-columns:1fr 1fr}.redemption header{grid-column:1/-1}.bottom-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.kpis{grid-template-columns:1fr}.redemption{display:block}.legend{display:none}.activity{overflow:auto}.activity-head,.activity-row{min-width:520px}}
+}

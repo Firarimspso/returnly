@@ -1,0 +1,14 @@
+:host { position: relative; display: block; }
+.date-range { position: relative; }
+.trigger { display: flex; min-width: 154px; height: 38px; align-items: center; justify-content: space-between; gap: 16px; padding: 0 12px; border: 1px solid #e2e0e6; border-radius: 8px; color: #5f5a66; background: #fff; box-shadow: 0 2px 7px rgba(35,29,48,.03); font-size: 14px; font-weight: 600; }
+.trigger:hover, .trigger[aria-expanded='true'] { border-color: #c9c1ed; color: #5945c6; background: #fdfcff; }
+.trigger i { color: #8c8793; font-size: 12px; font-style: normal; transition: transform 160ms ease; }
+.trigger i.open { transform: rotate(180deg); }
+.menu { position: absolute; z-index: 40; top: calc(100% + 7px); right: 0; width: 190px; padding: 6px; border: 1px solid #e3e0e6; border-radius: 10px; background: #fff; box-shadow: 0 18px 45px rgba(33,27,48,.14); animation: appear 140ms ease; }
+.menu button { display: flex; width: 100%; min-height: 36px; align-items: center; justify-content: space-between; padding: 0 10px; border: 0; border-radius: 7px; color: #615c68; background: transparent; font-size: 14px; text-align: left; }
+.menu button:hover { color: #5945c6; background: #f6f4ff; }
+.menu button.selected { color: #5945c6; background: #f0edff; font-weight: 700; }
+.menu button i { color: #6952e8; font-size: 12px; font-style: normal; }
+@keyframes appear { from { opacity: 0; transform: translateY(-3px); } }
+@media(max-width:560px) { :host { width: 100%; }.trigger { width: 100%; }.menu { right: auto; left: 0; width: 100%; } }
+@media(prefers-reduced-motion:reduce) { .menu { animation: none; }.trigger i { transition: none; } }

@@ -19,6 +19,7 @@ public sealed class Customer : BaseEntity, ITenantEntity
     public Restaurant Restaurant { get; set; } = null!;
     public ICollection<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
     public ICollection<QrCodeScan> QrCodeScans { get; set; } = new List<QrCodeScan>();
+    public ICollection<RedemptionRequest> RedemptionRequests { get; set; } = new List<RedemptionRequest>();
 }
 
 public enum CustomerStatus

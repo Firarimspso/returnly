@@ -5,7 +5,7 @@
 <section class="statistics" aria-label="Reward statistics">
   <article><span class="stat-icon active">◇</span><div><small>Active rewards</small><b>{{ activeRewards() }}</b><p>of {{ data.rewards().length }} total rewards</p></div></article>
   <article><span class="stat-icon redemptions">↗</span><div><small>Total redemptions</small><b>{{ totalRedemptions().toLocaleString() }}</b><p>Across all reward types</p></div></article>
-  <article><span class="stat-icon popular">★</span><div><small>Most popular reward</small><b>{{ popularReward()?.name || 'No rewards yet' }}</b><p>{{ popularReward()?.redemptions || 0 }} total redemptions</p></div></article>
+  <article><span class="stat-icon popular">★</span><div><small>Most popular reward</small><b>{{ popularReward()?.name || 'No rewards yet' }}</b><p>{{ redemptionLabel(popularReward()?.redemptions || 0) }}</p></div></article>
 </section>
 
 <section class="management">
@@ -34,18 +34,26 @@
         @for (reward of rewards(); track reward.id) {
           <article class="reward-card" [class.inactive]="!reward.active" [style.--reward-color]="reward.color">
             <header>
-              <span class="reward-icon">{{ reward.icon }}</span>
+              <span class="reward-icon">@if (reward.imageUrl) { <img [src]="reward.imageUrl" [alt]="reward.name" /> } @else { <app-reward-visual-icon [icon]="reward.icon" [category]="reward.category" /> }</span>
               <label class="toggle" [attr.aria-label]="(reward.active ? 'Deactivate ' : 'Activate ') + reward.name">
                 <input type="checkbox" [checked]="reward.active" (change)="setRewardActive(reward, !reward.active)" /><i></i>
               </label>
             </header>
-            <div class="category-row"><span>{{ reward.category }}</span><i [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</i></div>
+            <div class="category-row"><span [attr.data-category]="reward.category"><app-reward-category-icon [category]="reward.category" />{{ reward.category }}</span><i [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</i></div>
             <h2>{{ reward.name }}</h2><p>{{ reward.description }}</p>
-            <div class="reward-metrics"><span><small>Required points</small><b>✦ {{ reward.points.toLocaleString() }}</b></span><span><small>Redemptions</small><b>{{ reward.redemptions.toLocaleString() }}</b></span></div>
-            <footer><span>Created {{ reward.createdAt }}</span><div><button type="button" [attr.aria-label]="'Edit ' + reward.name" (click)="openEdit(reward)">✎</button><button class="delete" type="button" [attr.aria-label]="'Delete ' + reward.name" (click)="deletingRewardId.set(reward.id)">⌫</button></div></footer>
+            <div class="reward-metrics"><span><small>Required points</small><b>{{ pointLabel(reward.points) }}</b></span><span><small>Redemptions</small><b>{{ redemptionLabel(reward.redemptions) }}</b></span></div>
+            <footer class="card-footer">
+              <span>Created {{ reward.createdAt }}</span>
+              <div class="primary-actions">
+                <button type="button" (click)="openEdit(reward)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 4 6 6M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z" /></svg><span>Edit</span></button>
+                <button type="button" (click)="duplicateReward(reward)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg><span>Duplicate</span></button>
+                <button type="button" (click)="performanceRewardId.set(reward.id)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2" /></svg><span>Analytics</span></button>
+                <details class="action-menu"><summary aria-label="More reward actions"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg></summary><div><button type="button" (click)="deletingRewardId.set(reward.id)">Delete reward</button></div></details>
+              </div>
+            </footer>
           </article>
         }
-        <button class="add-card" type="button" (click)="openAdd()"><span>＋</span><b>Create another reward</b><small>Add an incentive customers will love</small></button>
+        <button class="add-card" type="button" (click)="openAdd()"><span>＋</span><b>Give customers something to return for</b><small>Create a memorable reward in under a minute</small><em>Create reward →</em></button>
       </div>
     } @else {
       <div class="table-wrap">
@@ -54,10 +62,10 @@
           <tbody>
             @for (reward of rewards(); track reward.id) {
               <tr>
-                <td><span class="table-reward" [style.--reward-color]="reward.color"><i>{{ reward.icon }}</i><span><b>{{ reward.name }}</b><small>{{ reward.description }}</small></span></span></td>
-                <td><span class="category">{{ reward.category }}</span></td><td><strong class="point-value">✦ {{ reward.points.toLocaleString() }}</strong></td><td>{{ reward.redemptions.toLocaleString() }}</td>
+                <td><span class="table-reward" [style.--reward-color]="reward.color"><i>@if (reward.imageUrl) { <img [src]="reward.imageUrl" [alt]="reward.name" /> } @else { <app-reward-visual-icon [icon]="reward.icon" [category]="reward.category" /> }</i><span><b>{{ reward.name }}</b><small>{{ reward.description }}</small></span></span></td>
+                <td><span class="category" [attr.data-category]="reward.category"><app-reward-category-icon [category]="reward.category" />{{ reward.category }}</span></td><td><strong class="point-value">{{ pointLabel(reward.points) }}</strong></td><td>{{ redemptionLabel(reward.redemptions) }}</td>
                 <td><label class="table-status"><span [class.active]="reward.active">{{ reward.active ? 'Active' : 'Inactive' }}</span><input type="checkbox" [checked]="reward.active" (change)="setRewardActive(reward, !reward.active)" /><i></i></label></td>
-                <td>{{ reward.createdAt }}</td><td><div class="row-actions"><button type="button" (click)="openEdit(reward)">✎</button><button class="delete" type="button" (click)="deletingRewardId.set(reward.id)">⌫</button></div></td>
+                <td>{{ reward.createdAt }}</td><td><div class="row-actions compact-actions"><button type="button" title="Edit" aria-label="Edit reward" (click)="openEdit(reward)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 4 6 6M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z" /></svg></button><button type="button" title="Duplicate" aria-label="Duplicate reward" (click)="duplicateReward(reward)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg></button><button type="button" title="Analytics" aria-label="View reward analytics" (click)="performanceRewardId.set(reward.id)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2" /></svg></button><details class="action-menu"><summary aria-label="More reward actions"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg></summary><div><button type="button" (click)="deletingRewardId.set(reward.id)">Delete reward</button></div></details></div></td>
               </tr>
             }
           </tbody>
@@ -65,7 +73,7 @@
       </div>
     }
   } @else {
-    <div class="empty"><span>◇</span><h2>No rewards found</h2><p>Try changing your search or filters, or create a new reward.</p><div><button type="button" (click)="clearFilters()">Clear filters</button><button class="primary-button" type="button" (click)="openAdd()">＋ Add reward</button></div></div>
+    <div class="empty"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v10H4V12M2 7h20v5H2V7Zm10 15V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7Zm0 0h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z" /></svg></span><h2>Create a reason to come back</h2><p>Turn customer points into an experience worth returning for. Start with a free item, discount, or special perk.</p><div><button type="button" (click)="clearFilters()">Clear filters</button><button class="primary-button" type="button" (click)="openAdd()">＋ Create your first reward</button></div></div>
   }
 </section>
 
@@ -79,5 +87,13 @@
     confirmLabel="Delete reward"
     (closed)="deletingRewardId.set(null)"
     (confirmed)="confirmDelete()"
+  />
+}
+@if (performanceReward(); as reward) {
+  <app-reward-performance-drawer
+    [reward]="reward"
+    [popularityRank]="popularityRank(reward)"
+    [totalRewards]="data.rewards().length"
+    (closed)="performanceRewardId.set(null)"
   />
 }

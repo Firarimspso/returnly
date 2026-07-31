@@ -8,31 +8,20 @@ public sealed class DashboardAnalyticsService(
     IDashboardAnalyticsRepository dashboardAnalyticsRepository,
     ICurrentTenant currentTenant) : IDashboardAnalyticsService
 {
-    private const int ActivityDays = 12;
-
     public async Task<DashboardAnalyticsDto> GetAsync(
+        DashboardPeriod period,
         CancellationToken cancellationToken = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var firstDay = today.AddDays(-(ActivityDays - 1));
-        var activityFrom = new DateTimeOffset(
-            firstDay.ToDateTime(TimeOnly.MinValue),
-            TimeSpan.Zero);
+        var now = DateTimeOffset.UtcNow;
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        var (from, to) = ResolvePeriod(period, today, now);
         var snapshot = await dashboardAnalyticsRepository.GetAsync(
-            GetRestaurantId(), activityFrom, cancellationToken);
+            GetRestaurantId(), from, to, cancellationToken);
 
         var activityCounts = snapshot.ActivityDates
             .GroupBy(date => DateOnly.FromDateTime(date.UtcDateTime))
             .ToDictionary(group => group.Key, group => group.Count());
-        var activityTrend = Enumerable.Range(0, ActivityDays)
-            .Select(offset =>
-            {
-                var date = firstDay.AddDays(offset);
-                return new DashboardActivityPointDto(
-                    date,
-                    activityCounts.GetValueOrDefault(date));
-            })
-            .ToArray();
+        var activityTrend = BuildActivityTrend(period, today, from, activityCounts);
 
         var redemptions = BuildRedemptionCounts(snapshot);
         var totalRedemptions = redemptions.Sum(item => item.Count);
@@ -56,7 +45,7 @@ public sealed class DashboardAnalyticsService(
                 reward.Icon,
                 redemptions
                     .FirstOrDefault(item => item.RewardId == reward.Id)?.Count
-                    ?? reward.TotalRedemptions))
+                    ?? 0))
             .OrderByDescending(reward => reward.Redemptions)
             .ThenBy(reward => reward.Name)
             .Take(3)
@@ -84,6 +73,50 @@ public sealed class DashboardAnalyticsService(
             redemptionBreakdown,
             recentActivity,
             topRewards);
+    }
+
+    private static (DateTimeOffset? From, DateTimeOffset? To) ResolvePeriod(
+        DashboardPeriod period,
+        DateOnly today,
+        DateTimeOffset now)
+    {
+        if (period == DashboardPeriod.AllTime) return (null, null);
+        var startDate = period switch
+        {
+            DashboardPeriod.Today => today,
+            DashboardPeriod.Last7Days => today.AddDays(-6),
+            _ => today.AddDays(-29),
+        };
+        return (
+            new DateTimeOffset(startDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero),
+            now);
+    }
+
+    private static IReadOnlyList<DashboardActivityPointDto> BuildActivityTrend(
+        DashboardPeriod period,
+        DateOnly today,
+        DateTimeOffset? from,
+        IReadOnlyDictionary<DateOnly, int> counts)
+    {
+        if (period == DashboardPeriod.AllTime)
+        {
+            return counts
+                .OrderBy(item => item.Key)
+                .Select(item => new DashboardActivityPointDto(item.Key, item.Value))
+                .ToArray();
+        }
+
+        var firstDay = from.HasValue
+            ? DateOnly.FromDateTime(from.Value.UtcDateTime)
+            : today;
+        var days = today.DayNumber - firstDay.DayNumber + 1;
+        return Enumerable.Range(0, days)
+            .Select(offset =>
+            {
+                var date = firstDay.AddDays(offset);
+                return new DashboardActivityPointDto(date, counts.GetValueOrDefault(date));
+            })
+            .ToArray();
     }
 
     private static IReadOnlyList<RewardRedemptionCount> BuildRedemptionCounts(

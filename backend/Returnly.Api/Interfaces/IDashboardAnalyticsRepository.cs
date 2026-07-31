@@ -6,7 +6,8 @@ public interface IDashboardAnalyticsRepository
 {
     Task<DashboardAnalyticsSnapshot> GetAsync(
         Guid restaurantId,
-        DateTimeOffset activityFrom,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
         CancellationToken cancellationToken = default);
 }
 

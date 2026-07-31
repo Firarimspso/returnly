@@ -93,7 +93,8 @@ export class CustomersPage {
   protected readonly firstResult = computed(() => this.customers().length ? (this.page() - 1) * this.pageSize + 1 : 0);
   protected readonly lastResult = computed(() => Math.min(this.page() * this.pageSize, this.customers().length));
   protected readonly activeCount = computed(() => this.data.customers().filter((customer) => customer.status === 'Active').length);
-  protected readonly vipCount = computed(() => this.data.customers().filter((customer) => customer.status === 'VIP').length);
+  protected readonly returningCount = computed(() =>
+    this.data.customers().filter((customer) => customer.visits >= 2).length);
   protected readonly newCount = computed(() => this.data.customers().filter((customer) => customer.status === 'New').length);
   protected readonly selectedCustomer = computed(() =>
     this.data.customers().find((customer) => customer.id === this.selectedCustomerId()) ?? null,
@@ -140,6 +141,42 @@ export class CustomersPage {
 
   protected openCreateCustomer(): void {
     this.createModalOpen.set(true);
+  }
+
+  protected exportCustomers(): void {
+    const headers = ['Full Name', 'Phone Number', 'Email', 'Points', 'Visits', 'Last Visit', 'Status'];
+    const rows = this.customers().map((customer) => [
+      customer.name,
+      customer.phone,
+      customer.email,
+      String(customer.points),
+      String(customer.visits),
+      customer.lastVisitTimestamp ? new Date(customer.lastVisitTimestamp).toISOString() : 'Never',
+      customer.status,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => this.csvValue(value)).join(','))
+      .join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `returnly-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  protected lastVisitBadge(customer: Customer): { label: string; tone: string } {
+    if (!customer.lastVisitTimestamp) return { label: 'Never', tone: 'never' };
+    const visit = new Date(customer.lastVisitTimestamp);
+    const today = new Date();
+    const visitDay = new Date(visit.getFullYear(), visit.getMonth(), visit.getDate()).getTime();
+    const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const days = Math.max(0, Math.round((todayDay - visitDay) / 86_400_000));
+    if (days === 0) return { label: 'Today', tone: 'today' };
+    if (days === 1) return { label: 'Yesterday', tone: 'yesterday' };
+    return { label: `${days} days ago`, tone: days >= 30 ? 'stale' : 'recent' };
   }
 
   protected createCustomer(request: CustomerUpsertRequest): void {
@@ -356,6 +393,10 @@ export class CustomersPage {
       phone: customer.phoneNumber,
       email: customer.email,
       birthday: customer.birthday ?? 'Not provided',
+      memberSince: new Intl.DateTimeFormat('en-US', {
+        month: 'long',
+        year: 'numeric',
+      }).format(new Date(customer.createdAt)),
       points: customer.currentPoints,
       lifetimePoints: customer.lifetimePoints,
       visits: customer.totalVisits,
@@ -373,10 +414,11 @@ export class CustomersPage {
           .filter((transaction) => transaction.customerId === customer.id)
           .map((transaction) => this.toTimelineItem(transaction)),
         ...(lastVisit ? [{
-        title: 'Visited your restaurant',
-        description: `Visit #${customer.totalVisits}`,
+        title: 'QR Scan',
+        description: `Visit #${customer.totalVisits} recorded`,
         date: new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(lastVisit),
-        icon: '⌂',
+        icon: '⌗',
+        type: 'qr' as const,
         }] : []),
       ],
     };
@@ -391,7 +433,7 @@ export class CustomersPage {
           ...transactions
             .filter((transaction) => transaction.customerId === customer.apiId)
             .map((transaction) => this.toTimelineItem(transaction)),
-          ...customer.activity.filter((item) => item.icon === '⌂'),
+          ...customer.activity.filter((item) => item.type === 'qr'),
         ],
       })),
     );
@@ -418,18 +460,26 @@ export class CustomersPage {
   }
 
   private toTimelineItem(transaction: PointTransactionDto) {
+    const isRedeem = transaction.type === 'Redeem';
+    const isQr = !isRedeem && transaction.reason.toLowerCase().startsWith('qr scan');
+    const isAdjustment = !isRedeem && /manual|adjustment/i.test(transaction.reason);
     return {
-      title: transaction.type === 'Earn'
-        ? `Added ${transaction.points.toLocaleString()} points`
-        : transaction.reason,
-      description: transaction.type === 'Earn'
-        ? transaction.reason
-        : `Used ${transaction.points.toLocaleString()} points`,
+      title: isRedeem
+        ? 'Redeemed Reward'
+        : isQr
+          ? 'QR Scan'
+          : isAdjustment
+            ? 'Manual Adjustment'
+            : 'Earned Points',
+      description: isRedeem
+        ? `${transaction.reason} · ${transaction.points.toLocaleString()} points`
+        : `${transaction.reason} · +${transaction.points.toLocaleString()} points`,
       date: new Intl.DateTimeFormat('en-US', {
         dateStyle: 'medium',
         timeStyle: 'short',
       }).format(new Date(transaction.createdAt)),
-      icon: transaction.type === 'Earn' ? '✦' : '◇',
+      icon: isRedeem ? '◇' : isQr ? '⌗' : isAdjustment ? '±' : '✦',
+      type: isRedeem ? 'redeem' as const : isQr ? 'qr' as const : isAdjustment ? 'adjustment' as const : 'earn' as const,
     };
   }
 
@@ -446,5 +496,10 @@ export class CustomersPage {
   private avatarColor(id: string): string {
     const colors = ['#7857d9', '#d56f66', '#3f9d7c', '#c48736', '#487abf', '#995fa7'];
     return colors[this.numericId(id) % colors.length];
+  }
+
+  private csvValue(value: string): string {
+    const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
+    return `"${safe.replace(/"/g, '""')}"`;
   }
 }

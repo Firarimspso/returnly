@@ -1,0 +1,14 @@
+@switch (type()) {
+  @case ('Bonus Points') {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v8m-4-4h8" /></svg>
+  }
+  @case ('Discount') {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15.5 5.5-7 13M6.5 6.5h.01M17.5 17.5h.01" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></svg>
+  }
+  @case ('Free Reward') {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v10H4V12M2 7h20v5H2V7Zm10 15V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7Zm0 0h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z" /></svg>
+  }
+  @default {
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2" /></svg>
+  }
+}

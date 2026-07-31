@@ -6,11 +6,13 @@ import { finalize } from 'rxjs';
 import { SCAN_BASE_URL } from '../../../core/config/scan-url.config';
 import { QrCodeDto } from '../../../core/models/qr-code.model';
 import { QrCodeApiService } from '../../../core/services/qr-code-api.service';
+import { RestaurantProfileApiService } from '../../../core/services/restaurant-profile-api.service';
 import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
 import { QrFormModalComponent } from '../../components/qr-form-modal/qr-form-modal';
 import { QrImageComponent } from '../../components/qr-image/qr-image';
 import { QrPreviewComponent } from '../../components/qr-preview/qr-preview';
+import { QrTypeIconComponent } from '../../components/qr-type-icon/qr-type-icon';
 import { QrCode, QrCodeDraft, QrCodeStatus, QrCodeType } from '../../models/dashboard.models';
 
 type TypeFilter = 'All types' | QrCodeType;
@@ -24,13 +26,15 @@ type StatusFilter = 'All statuses' | QrCodeStatus;
     QrImageComponent,
     QrPreviewComponent,
     QrFormModalComponent,
+    QrTypeIconComponent,
     ConfirmationDialogComponent,
   ],
   templateUrl: './qr-codes.html',
-  styleUrl: './qr-codes.scss',
+  styleUrls: ['./qr-codes.scss', './qr-codes-polish.scss'],
 })
 export class QrCodesPage {
   private readonly qrCodeApi = inject(QrCodeApiService);
+  private readonly profileApi = inject(RestaurantProfileApiService);
   private readonly scanBaseUrl = inject(SCAN_BASE_URL);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly qrCodeRecords = signal<QrCode[]>([]);
@@ -150,7 +154,7 @@ export class QrCodesPage {
   }
 
   protected async downloadQr(qrCode: QrCode): Promise<void> {
-    const imageUrl = await this.qrImage(qrCode.token, 1200);
+    const imageUrl = await this.brandedQrImage(qrCode, 1200);
     const anchor = document.createElement('a');
     anchor.href = imageUrl;
     anchor.download = `${this.fileName(qrCode.name)}-qr.png`;
@@ -160,11 +164,11 @@ export class QrCodesPage {
   }
 
   protected async printQr(qrCode: QrCode): Promise<void> {
-    const imageUrl = await this.qrImage(qrCode.token, 900);
+    const imageUrl = await this.brandedQrImage(qrCode, 900);
     const printWindow = window.open('', '_blank', 'width=720,height=820');
     if (!printWindow) return;
     const safeName = this.escapeHtml(qrCode.name);
-    printWindow.document.write(`<!doctype html><html><head><title>Print ${safeName}</title><style>body{display:grid;min-height:95vh;place-items:center;margin:0;font-family:Arial;color:#211d29}.sheet{text-align:center}img{width:420px;height:420px}h1{margin:24px 0 8px;font-size:28px}p{margin:0;color:#716b79}@media print{body{min-height:auto}.sheet{break-inside:avoid}}</style></head><body><main class="sheet"><img src="${imageUrl}" alt="QR code for ${safeName}"><h1>${safeName}</h1><p>Scan to earn ${qrCode.pointsPerScan.toLocaleString()} loyalty points.</p></main><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script></body></html>`);
+    printWindow.document.write(`<!doctype html><html><head><title>Print ${safeName}</title><style>body{display:grid;min-height:95vh;place-items:center;margin:0;font-family:Arial;color:#211d29}.sheet{text-align:center}img{width:min(620px,90vw);height:auto}@media print{body{min-height:auto}.sheet{break-inside:avoid}}</style></head><body><main class="sheet"><img src="${imageUrl}" alt="QR code for ${safeName}"></main><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script></body></html>`);
     printWindow.document.close();
   }
 
@@ -221,6 +225,66 @@ export class QrCodesPage {
       margin: 4,
       errorCorrectionLevel: 'H',
       color: { dark: '#211d29', light: '#ffffff' },
+    });
+  }
+
+  private async brandedQrImage(qrCode: QrCode, width: number): Promise<string> {
+    const profile = this.profileApi.profile();
+    const qr = await this.loadImage(await this.qrImage(qrCode.token, Math.round(width * .64)));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = Math.round(width * 1.28);
+    const context = canvas.getContext('2d');
+    if (!context) return qr.src;
+
+    const brand = profile?.primaryBrandColor || '#6952e8';
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = brand;
+    context.fillRect(0, 0, canvas.width, Math.round(width * .18));
+    context.fillStyle = '#ffffff';
+    context.textAlign = 'center';
+    context.font = `700 ${Math.round(width * .052)}px Arial`;
+    context.fillText(profile?.name || 'Returnly Restaurant', width / 2, width * .105);
+    if (profile?.logoUrl) {
+      try {
+        const logo = await this.loadImage(profile.logoUrl);
+        const logoSize = width * .1;
+        context.save();
+        context.beginPath();
+        context.arc(width * .095, width * .09, logoSize / 2, 0, Math.PI * 2);
+        context.clip();
+        context.drawImage(logo, width * .045, width * .04, logoSize, logoSize);
+        context.restore();
+      } catch {
+        // Keep the printable asset usable if a remote logo is temporarily unavailable.
+      }
+    }
+
+    const qrSize = width * .68;
+    context.drawImage(qr, (width - qrSize) / 2, width * .225, qrSize, qrSize);
+    context.fillStyle = '#211d29';
+    context.font = `700 ${Math.round(width * .046)}px Arial`;
+    context.fillText(qrCode.name, width / 2, width * .99);
+    context.fillStyle = '#716b79';
+    context.font = `400 ${Math.round(width * .027)}px Arial`;
+    context.fillText(
+      `Scan to earn ${qrCode.pointsPerScan.toLocaleString()} loyalty points`,
+      width / 2,
+      width * 1.05,
+    );
+    context.fillStyle = brand;
+    context.font = `700 ${Math.round(width * .025)}px Arial`;
+    context.fillText('POWERED BY RETURNLY', width / 2, width * 1.17);
+    return canvas.toDataURL('image/png');
+  }
+
+  private loadImage(source: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = source;
     });
   }
 

@@ -1,0 +1,56 @@
+<main class="login-page">
+  <a class="brand" routerLink="/" aria-label="Returnly home">
+    <span><i></i></span><b>Returnly</b>
+  </a>
+
+  <section class="login-card">
+    <header>
+      <span class="welcome-icon">✦</span>
+      <p>RESTAURANT PORTAL</p>
+      <h1>Welcome back</h1>
+      <span>Sign in to manage your loyalty program.</span>
+    </header>
+
+    <form (ngSubmit)="submit()">
+      <label>
+        <span>Email address</span>
+        <input
+          type="email"
+          name="email"
+          autocomplete="email"
+          placeholder="you@restaurant.com"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event); errorMessage.set('')"
+          autofocus
+        />
+      </label>
+
+      <label>
+        <span>Password</span>
+        <div class="password-field">
+          <input
+            [type]="passwordVisible() ? 'text' : 'password'"
+            name="password"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event); errorMessage.set('')"
+          />
+          <button type="button" [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'" (click)="passwordVisible.update((visible) => !visible)">
+            {{ passwordVisible() ? '◉' : '◎' }}
+          </button>
+        </div>
+      </label>
+
+      @if (errorMessage()) {
+        <p class="error" role="alert"><i>!</i>{{ errorMessage() }}</p>
+      }
+
+      <button class="submit" type="submit" [disabled]="submitting() || !email().trim() || !password()">
+        {{ submitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+  </section>
+
+  <footer>Secure restaurant access · <a routerLink="/">Return to website</a></footer>
+</main>

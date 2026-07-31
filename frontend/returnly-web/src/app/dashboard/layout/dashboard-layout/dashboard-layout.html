@@ -4,10 +4,13 @@
     <a class="brand" routerLink="/" aria-label="Returnly home">
       <span class="brand-mark"><i></i></span><strong>Returnly</strong>
     </a>
-    <div class="workspace">
-      <span class="restaurant-logo">SM</span>
-      <span><b>Solé & Maple</b><small>Downtown location</small></span>
-      <i>⌄</i>
+    <!-- TODO: Convert this static card into a restaurant selector when multi-location support is implemented. -->
+    <div class="workspace" aria-label="Current restaurant">
+      <span class="restaurant-logo" aria-hidden="true">
+        @if (restaurantProfile()?.logoUrl) { <img [src]="restaurantProfile()!.logoUrl" alt="" /> }
+        @else { {{ restaurantInitials() }} }
+      </span>
+      <span><b>{{ restaurantName() }}</b><small>{{ restaurantLocation() }}</small></span>
     </div>
     <nav aria-label="Restaurant portal">
       <span class="nav-label">Workspace</span>
@@ -33,14 +36,14 @@
         <button class="notification" type="button" aria-label="Notifications">♢<i></i></button>
         <div class="profile-wrap">
           <button class="profile" type="button" aria-label="Open restaurant profile" [attr.aria-expanded]="profileOpen()" (click)="toggleProfile($event)">
-            <span>AM</span><b>Adam Miller</b><i>⌄</i>
+            <span>{{ userInitials() }}</span><b>{{ userName() }}</b><i>⌄</i>
           </button>
           @if (profileOpen()) {
             <div class="profile-menu" (click)="$event.stopPropagation()">
-              <span><b>Adam Miller</b><small>owner&#64;solemaple.com</small></span>
+              <span><b>{{ user()?.firstName }} {{ user()?.lastName }}</b><small>{{ user()?.email }}</small></span>
               <a routerLink="/dashboard/settings">Restaurant settings</a>
               <a routerLink="/">View public site</a>
-              <button type="button">Sign out</button>
+              <button type="button" (click)="logout()">Sign out</button>
             </div>
           }
         </div>

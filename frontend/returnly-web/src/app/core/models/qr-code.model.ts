@@ -49,6 +49,10 @@ export interface QrCodeScanResultDto {
 
 export interface PublicQrCodeDto {
   restaurantName: string;
+  restaurantLogoUrl: string | null;
+  restaurantCoverImageUrl: string | null;
+  restaurantDescription: string | null;
+  primaryBrandColor: string;
   qrCodeName: string;
   type: ApiQrCodeType;
   pointsPerScan: number;
@@ -61,10 +65,14 @@ export interface PublicQrScanRequest {
 
 export interface PublicQrScanResultDto {
   restaurantName: string;
+  restaurantLogoUrl: string | null;
+  primaryBrandColor: string;
   customerFirstName: string;
   pointsAwarded: number;
   currentPoints: number;
   scannedAt: string;
+  customerPortalToken: string;
+  customerPortalTokenExpiresAt: string;
 }
 
 export interface QrCodeApiResponse<T> {

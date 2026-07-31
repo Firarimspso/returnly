@@ -1,12 +1,13 @@
 import { Component, effect, HostListener, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { QrCode, QrCodeDraft, QrCodeStatus, QrCodeType } from '../../models/dashboard.models';
+import { QrTypeIconComponent } from '../qr-type-icon/qr-type-icon';
 
 @Component({
   selector: 'app-qr-form-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, QrTypeIconComponent],
   templateUrl: './qr-form-modal.html',
-  styleUrl: './qr-form-modal.scss',
+  styleUrls: ['./qr-form-modal.scss', './qr-form-modal-polish.scss'],
 })
 export class QrFormModalComponent {
   readonly qrCode = input<QrCode | null>(null);
@@ -17,10 +18,10 @@ export class QrFormModalComponent {
   protected readonly status = signal<QrCodeStatus>('Active');
   protected readonly pointsPerScan = signal<number | null>(5);
   protected readonly error = signal('');
-  protected readonly types: { value: QrCodeType; icon: string; description: string }[] = [
-    { value: 'General', icon: '⌗', description: 'Menus, windows, and general use' },
-    { value: 'Table', icon: '▦', description: 'Track scans from a specific table' },
-    { value: 'Receipt', icon: '▤', description: 'Printed receipts and takeaway bags' },
+  protected readonly types: { value: QrCodeType; description: string }[] = [
+    { value: 'General', description: 'Menus, posters, and windows' },
+    { value: 'Table', description: 'One QR code per table' },
+    { value: 'Receipt', description: 'Printed receipts and takeaway' },
   ];
 
   constructor() {

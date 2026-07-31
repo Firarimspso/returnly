@@ -5,6 +5,7 @@ export interface CustomerTimelineItem {
   description: string;
   date: string;
   icon: string;
+  type?: 'earn' | 'redeem' | 'qr' | 'adjustment';
 }
 
 export interface CustomerUpdate {
@@ -21,6 +22,7 @@ export interface Customer {
   phone: string;
   email: string;
   birthday: string;
+  memberSince?: string;
   points: number;
   lifetimePoints: number;
   visits: number;
@@ -42,6 +44,7 @@ export interface Reward {
   points: number;
   active: boolean;
   icon: string;
+  imageUrl?: string | null;
   redemptions: number;
   category: RewardCategory;
   createdAt: string;
@@ -71,7 +74,15 @@ export interface Activity {
 
 export type CampaignType = 'Bonus Points' | 'Free Reward' | 'Discount' | 'Birthday Reward' | 'Seasonal Promotion';
 export type CampaignStatus = 'Draft' | 'Scheduled' | 'Active' | 'Paused' | 'Completed';
-export type CampaignAudience = 'All Customers' | 'VIP Members' | 'New Customers' | 'Inactive Customers' | 'Birthday Customers';
+export type CampaignAudience =
+  | 'All customers'
+  | 'Returning customers'
+  | 'VIP customers'
+  | 'All Customers'
+  | 'VIP Members'
+  | 'New Customers'
+  | 'Inactive Customers'
+  | 'Birthday Customers';
 
 export interface Campaign {
   id: number;

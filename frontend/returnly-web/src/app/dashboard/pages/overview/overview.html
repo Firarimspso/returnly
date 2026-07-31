@@ -1,53 +1,75 @@
 <app-page-header title="Loyalty overview" [description]="'Live performance for ' + (analytics()?.restaurantName || 'your restaurant') + '.'">
-  <button class="period">Last 30 days <span>⌄</span></button>
+  <app-date-range-selector (changed)="changeRange($event)" />
 </app-page-header>
 
-<section class="kpis">
-  <app-kpi-card icon="♙" [value]="formatNumber(analytics()?.totalCustomers || 0)" label="Total Customers" trend="Live" detail="Registered loyalty customers" />
-  <app-kpi-card icon="◇" [value]="formatNumber(analytics()?.activeRewards || 0)" label="Active Rewards" trend="Live" detail="Currently available rewards" />
-  <app-kpi-card icon="●" [value]="formatNumber(analytics()?.outstandingPoints || 0)" label="Outstanding Points" trend="Live" detail="Current customer point balances" />
-  <app-kpi-card icon="✦" [value]="formatNumber(analytics()?.lifetimePointsIssued || 0)" label="Lifetime Points Issued" trend="Live" detail="All points earned over time" />
-  <app-kpi-card icon="↗" [value]="formatNumber(analytics()?.rewardsRedeemed || 0)" label="Rewards Redeemed" trend="Live" detail="Recorded redemption transactions" />
-  <app-kpi-card icon="◷" [value]="formatNumber(analytics()?.recentActivity?.length || 0)" label="Recent Activity" trend="Live" detail="Latest loyalty interactions" />
-</section>
+@if (loading()) {
+  <section class="dashboard-state compact" aria-live="polite"><span class="state-spinner"></span><div><b>Loading live analytics</b><p>Preparing your restaurant’s latest loyalty activity.</p></div></section>
+} @else if (errorMessage()) {
+  <section class="dashboard-state error" role="alert"><span>!</span><div><b>Analytics are temporarily unavailable</b><p>{{ errorMessage() }}</p></div></section>
+} @else if (analytics(); as data) {
+  <section class="kpis">
+    <app-kpi-card icon="♙" [value]="formatNumber(data.totalCustomers)" label="Total Customers" [trend]="selectedRange().label" detail="Customers added in this period" />
+    <app-kpi-card icon="◇" [value]="formatNumber(data.activeRewards)" label="Active Rewards" [trend]="selectedRange().label" detail="Active rewards created in this period" />
+    <app-kpi-card icon="●" [value]="formatNumber(data.outstandingPoints)" label="Net Points" [trend]="selectedRange().label" detail="Points earned minus points redeemed" />
+    <app-kpi-card icon="✦" [value]="formatNumber(data.lifetimePointsIssued)" label="Points Issued" [trend]="selectedRange().label" detail="Points earned in this period" />
+    <app-kpi-card icon="↗" [value]="formatNumber(data.rewardsRedeemed)" label="Rewards Redeemed" [trend]="selectedRange().label" detail="Redemptions in this period" />
+    <app-kpi-card icon="◷" [value]="formatNumber(data.recentActivity.length)" label="Recent Activity" [trend]="selectedRange().label" detail="Latest interactions in this period" />
+  </section>
 
-<section class="charts">
-  <article class="panel visits">
-    <header><span><b>Loyalty activity</b><small>Daily points activity over the last 12 days</small></span><div class="legend"><i></i> Transactions</div></header>
-    <div class="chart-area">
-      <div class="y-axis"><span>{{ chartMaximum() }}</span><span>{{ (chartMaximum() * .67).toFixed(0) }}</span><span>{{ (chartMaximum() * .33).toFixed(0) }}</span><span>0</span></div>
-      <div class="bar-chart">
-        @for (height of chartBars(); track $index) { <div><i [style.height.%]="height"></i><b [style.height.%]="0"></b></div> }
-      </div>
-    </div>
-    <div class="x-axis">@for (label of chartLabels(); track label) { <span>{{ label }}</span> }</div>
-  </article>
-  <article class="panel redemption">
-    <header><span><b>Reward redemptions</b><small>By reward type</small></span><button>•••</button></header>
-    <div class="donut" [style.background]="redemptionGradient()"><span><b>{{ formatNumber(analytics()?.rewardsRedeemed || 0) }}</b><small>Total</small></span></div>
-    <ul>
-      @for (item of analytics()?.redemptionBreakdown || []; track item.name) {
-        <li><i></i><span>{{ item.name }}</span><b>{{ item.percentage }}%</b></li>
+  <section class="charts">
+    <article class="panel visits">
+      <header><span><b>Loyalty activity</b><small>Daily points activity · {{ selectedRange().label }}</small></span><div class="legend"><i></i> Transactions</div></header>
+      @if (hasActivity()) {
+        <div class="chart-area">
+          <div class="y-axis"><span>{{ chartMaximum() }}</span><span>{{ (chartMaximum() * .67).toFixed(0) }}</span><span>{{ (chartMaximum() * .33).toFixed(0) }}</span><span>0</span></div>
+          <div class="bar-chart">
+            @for (height of chartBars(); track $index) { <div><i [style.height.%]="height"></i></div> }
+          </div>
+        </div>
+        <div class="x-axis">@for (label of chartLabels(); track label) { <span>{{ label }}</span> }</div>
+      } @else {
+        <div class="panel-empty"><span>⌁</span><b>No customer activity for {{ selectedRange().label.toLowerCase() }}.</b><p>Choose another period or wait for the next loyalty interaction.</p></div>
       }
-    </ul>
-  </article>
-</section>
+    </article>
+    <article class="panel redemption">
+      <header><span><b>Reward redemptions</b><small>By reward type · {{ selectedRange().label }}</small></span></header>
+      @if (hasRedemptions()) {
+        <div class="donut" [style.background]="redemptionGradient()"><span><b>{{ formatNumber(data.rewardsRedeemed) }}</b><small>Total</small></span></div>
+        <ul>
+          @for (item of data.redemptionBreakdown; track item.name) {
+            <li><i></i><span>{{ item.name }}</span><b>{{ item.percentage }}%</b></li>
+          }
+        </ul>
+      } @else {
+        <div class="panel-empty"><span>◇</span><b>No rewards redeemed for {{ selectedRange().label.toLowerCase() }}.</b><p>Choose another period to view earlier redemptions.</p></div>
+      }
+    </article>
+  </section>
 
-<section class="bottom-grid">
-  <article class="panel activity">
-    <header><span><b>Recent activity</b><small>Latest customer interactions</small></span><a href="/dashboard/customers">View all →</a></header>
-    <div class="activity-head"><span>Customer</span><span>Activity</span><span>Time</span></div>
-    @for (item of analytics()?.recentActivity || []; track item.id) {
-      <div class="activity-row">
-        <span class="person"><i [style.background]="tone(item.customerId)">{{ initials(item.customerName) }}</i><b>{{ item.customerName }}</b></span>
-        <span><b>{{ activityAction(item) }}</b><small>{{ item.reason }}</small></span><time>{{ relativeTime(item.createdAt) }}</time>
-      </div>
-    }
-  </article>
-  <article class="panel top-rewards">
-    <header><span><b>Top rewards</b><small>Most redeemed this month</small></span><a href="/dashboard/rewards">Manage →</a></header>
-    @for (reward of analytics()?.topRewards || []; track reward.id) {
-      <div class="reward"><i>{{ reward.icon || '◇' }}</i><span><b>{{ reward.name }}</b><small>{{ reward.requiredPoints }} points</small></span><strong>{{ reward.redemptions }}</strong></div>
-    }
-  </article>
-</section>
+  <section class="bottom-grid">
+    <article class="panel activity">
+      <header><span><b>Recent activity</b><small>Latest interactions · {{ selectedRange().label }}</small></span><a href="/dashboard/customers">View all →</a></header>
+      @if (recentActivity().length) {
+        <div class="activity-head"><span>Customer</span><span>Activity</span><span>Time</span></div>
+        @for (item of recentActivity(); track item.id) {
+          <div class="activity-row">
+            <span class="person"><i [style.background]="tone(item.customerId)">{{ initials(item.customerName) }}</i><b>{{ item.customerName }}</b></span>
+            <span><b>{{ activityAction(item) }}</b><small>{{ item.reason }}</small></span><time>{{ relativeTime(item.createdAt) }}</time>
+          </div>
+        }
+      } @else {
+        <div class="panel-empty"><span>◷</span><b>No loyalty activity for {{ selectedRange().label.toLowerCase() }}.</b><p>Choose another period to view earlier activity.</p></div>
+      }
+    </article>
+    <article class="panel top-rewards">
+      <header><span><b>Top rewards</b><small>Most redeemed · {{ selectedRange().label }}</small></span><a href="/dashboard/rewards">Manage →</a></header>
+      @if (topRewards().length) {
+        @for (reward of topRewards(); track reward.id) {
+          <div class="reward"><i><app-reward-visual-icon [icon]="reward.icon" /></i><span><b>{{ reward.name }}</b><small>{{ reward.requiredPoints }} points</small></span><strong>{{ reward.redemptions }}</strong></div>
+        }
+      } @else {
+        <div class="panel-empty"><span>◇</span><b>No top rewards for {{ selectedRange().label.toLowerCase() }}.</b><p>Choose another period to view earlier reward performance.</p></div>
+      }
+    </article>
+  </section>
+}

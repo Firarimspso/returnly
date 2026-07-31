@@ -9,8 +9,11 @@
     <section class="identity">
       <div class="photo" [style.background]="customer().color">{{ customer().initials }}</div>
       <h2>{{ customer().name }}</h2>
-      <span class="status" [class]="customer().status.toLowerCase()">{{ customer().status }}</span>
-      <p>Customer since March 2025</p>
+      <div class="identity-badges">
+        <span class="status" [class]="customer().status.toLowerCase()">{{ customer().status }}</span>
+        <span class="membership" [attr.data-level]="membershipLevel().toLowerCase()">◆ {{ membershipLevel() }}</span>
+      </div>
+      <p>Customer since {{ customer().memberSince || 'date unavailable' }}</p>
     </section>
 
     <div class="primary-actions">
@@ -29,19 +32,19 @@
     <section class="stats">
       <article><span>⌂</span><b>{{ customer().visits }}</b><small>Total Visits</small></article>
       <article><span>✦</span><b>{{ customer().lifetimePoints.toLocaleString() }}</b><small>Lifetime Points</small></article>
-      <article><span>●</span><b>{{ customer().points.toLocaleString() }}</b><small>Current Points</small></article>
+      <article class="current-points"><span>●</span><b>{{ customer().points.toLocaleString() }}</b><small>Current Points</small></article>
       <article><span>◇</span><b>{{ customer().rewardsRedeemed }}</b><small>Rewards Redeemed</small></article>
     </section>
 
     <section class="preferences">
-      <div><span><small>Favorite reward</small><b>{{ customer().favoriteReward }}</b></span><i>★</i></div>
+      <div><span><small>Favorite reward</small><button class="reward-link" type="button" disabled title="Reward details are coming soon">{{ customer().favoriteReward }}</button></span><i>★</i></div>
       <div><span><small>Last visit</small><b>{{ customer().lastVisit }}</b></span><i>◷</i></div>
     </section>
 
     <section class="timeline">
       <h3>Recent activity</h3>
       @for (item of customer().activity; track item.date + item.title) {
-        <article>
+        <article [attr.data-type]="item.type">
           <i>{{ item.icon }}</i>
           <span><b>{{ item.title }}</b><small>{{ item.description }}</small><time>{{ item.date }}</time></span>
         </article>

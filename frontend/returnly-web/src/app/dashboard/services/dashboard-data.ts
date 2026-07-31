@@ -21,7 +21,7 @@ export class DashboardDataService {
       activity: [
         { title: 'Earned 85 points', description: 'Takeaway order · $34.00 spent', date: 'Today, 8:15 AM', icon: '✦' },
         { title: 'Redeemed 20% Off', description: 'Used 1,000 points · Order #4789', date: 'July 12, 2026', icon: '◇' },
-        { title: 'Visited Solé & Maple', description: 'Lunch service', date: 'July 5, 2026', icon: '⌂' },
+        { title: 'Visited your restaurant', description: 'Lunch service', date: 'July 5, 2026', icon: '⌂' },
       ],
     },
     {

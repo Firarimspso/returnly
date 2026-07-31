@@ -1,77 +1,100 @@
-import { Component, computed, effect, HostListener, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, HostListener, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RewardDto } from '../../../core/models/reward.model';
+import { RewardApiService } from '../../../core/services/reward-api.service';
 import {
   Campaign, CampaignAudience, CampaignDraft, CampaignStatus, CampaignType,
 } from '../../models/dashboard.models';
+import { CampaignTypeIconComponent } from '../campaign-type-icon/campaign-type-icon';
 
 @Component({
   selector: 'app-campaign-form-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, CampaignTypeIconComponent],
   templateUrl: './campaign-form-modal.html',
-  styleUrl: './campaign-form-modal.scss',
+  styleUrls: ['./campaign-form-modal.scss', './campaign-form-modal-polish.scss'],
 })
 export class CampaignFormModalComponent {
+  private readonly rewardApi = inject(RewardApiService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly campaign = input<Campaign | null>(null);
   readonly closed = output<void>();
   readonly saved = output<CampaignDraft>();
 
   protected readonly name = signal('');
   protected readonly type = signal<CampaignType>('Bonus Points');
-  protected readonly audience = signal<CampaignAudience>('All Customers');
-  protected readonly status = signal<CampaignStatus>('Draft');
-  protected readonly message = signal('');
+  protected readonly audience = signal<CampaignAudience>('All customers');
+  protected readonly status = signal<CampaignStatus>('Active');
   protected readonly incentiveValue = signal<number | null>(null);
+  protected readonly selectedRewardId = signal('');
+  protected readonly rewards = signal<RewardDto[]>([]);
+  protected readonly rewardsLoading = signal(false);
+  protected readonly rewardsError = signal('');
   protected readonly startDate = signal('');
   protected readonly endDate = signal('');
   protected readonly error = signal('');
-  protected readonly types: { value: CampaignType; icon: string }[] = [
-    { value: 'Bonus Points', icon: '✦' }, { value: 'Free Reward', icon: '◇' },
-    { value: 'Discount', icon: '%' }, { value: 'Birthday Reward', icon: '♛' },
-    { value: 'Seasonal Promotion', icon: '❋' },
+  protected readonly types: { value: CampaignType; description: string }[] = [
+    { value: 'Bonus Points', description: 'Reward visits with extra points' },
+    { value: 'Discount', description: 'Offer a percentage discount' },
+    { value: 'Free Reward', description: 'Promote an existing reward' },
   ];
   protected readonly audiences: CampaignAudience[] = [
-    'All Customers', 'VIP Members', 'New Customers', 'Inactive Customers', 'Birthday Customers',
+    'All customers', 'Returning customers', 'VIP customers',
   ];
-  protected readonly launchOptions: { value: CampaignStatus; title: string; description: string }[] = [
-    { value: 'Active', title: 'Start now', description: 'Launch as soon as it is saved' },
-    { value: 'Scheduled', title: 'Schedule', description: 'Launch automatically on the start date' },
-    { value: 'Draft', title: 'Save draft', description: 'Keep editing before launch' },
-    { value: 'Paused', title: 'Keep paused', description: 'Save without sending new messages' },
-  ];
-  protected readonly incentiveLabel = computed(() => ({
-    'Bonus Points': 'Points multiplier',
-    'Free Reward': 'Reward point value',
-    'Discount': 'Discount percentage',
-    'Birthday Reward': 'Reward point value',
-    'Seasonal Promotion': 'Offer percentage',
-  })[this.type()]);
-  protected readonly incentiveSuffix = computed(() =>
-    ['Discount', 'Seasonal Promotion'].includes(this.type()) ? '%' : this.type() === 'Bonus Points' ? '×' : 'points',
-  );
+  protected readonly statuses: CampaignStatus[] = ['Draft', 'Active', 'Scheduled'];
+  protected readonly selectedReward = computed(() =>
+    this.rewards().find((reward) => reward.id === this.selectedRewardId()) ?? null);
+  protected readonly previewValue = computed(() => {
+    if (this.type() === 'Free Reward') return this.selectedReward()?.name || 'Select a reward';
+    const value = Math.max(0, Number(this.incentiveValue()) || 0).toLocaleString();
+    return this.type() === 'Discount' ? `${value}% discount` : `+${value} bonus points`;
+  });
+  protected readonly previewStatus = computed(() => this.resolvedStatus(false));
 
   constructor() {
+    this.loadRewards();
     effect(() => {
       const campaign = this.campaign();
       if (!campaign) return;
       this.name.set(campaign.name);
-      this.type.set(campaign.type);
-      this.audience.set(campaign.audience);
-      this.status.set(campaign.status === 'Completed' ? 'Draft' : campaign.status);
-      this.message.set(campaign.message);
+      this.type.set(this.supportedType(campaign.type));
+      this.audience.set(this.supportedAudience(campaign.audience));
+      this.status.set(['Draft', 'Active', 'Scheduled'].includes(campaign.status)
+        ? campaign.status
+        : 'Draft');
       this.incentiveValue.set(campaign.incentiveValue);
       this.startDate.set(campaign.startDate);
       this.endDate.set(campaign.endDate);
     });
+    effect(() => {
+      const campaign = this.campaign();
+      const rewards = this.rewards();
+      if (!campaign || this.type() !== 'Free Reward' || this.selectedRewardId()) return;
+      this.selectedRewardId.set(
+        rewards.find((reward) => reward.requiredPoints === campaign.incentiveValue)?.id ?? '',
+      );
+    });
   }
 
-  protected submit(): void {
-    const value = Number(this.incentiveValue());
-    if (!this.name().trim() || !this.message().trim()) {
-      this.error.set('Enter a campaign name and customer message.');
+  protected selectType(type: CampaignType): void {
+    this.type.set(type);
+    this.error.set('');
+  }
+
+  protected submit(asDraft = false): void {
+    if (!this.name().trim()) {
+      this.error.set('Enter a campaign name.');
       return;
     }
-    if (!Number.isFinite(value) || value <= 0) {
-      this.error.set('Enter a valid incentive value.');
+    const reward = this.selectedReward();
+    const value = this.type() === 'Free Reward'
+      ? reward?.requiredPoints
+      : Number(this.incentiveValue());
+    if (!Number.isFinite(value) || Number(value) <= 0) {
+      this.error.set(this.type() === 'Free Reward'
+        ? 'Select an active reward.'
+        : `Enter a valid ${this.type() === 'Discount' ? 'percentage' : 'bonus points value'}.`);
       return;
     }
     if (!this.startDate() || !this.endDate() || this.endDate() < this.startDate()) {
@@ -79,9 +102,62 @@ export class CampaignFormModalComponent {
       return;
     }
     this.saved.emit({
-      name: this.name().trim(), type: this.type(), audience: this.audience(), status: this.status(),
-      message: this.message().trim(), incentiveValue: value, startDate: this.startDate(), endDate: this.endDate(),
+      name: this.name().trim(),
+      type: this.type(),
+      audience: this.audience(),
+      status: this.resolvedStatus(asDraft),
+      message: this.generatedMessage(reward),
+      incentiveValue: Number(value),
+      startDate: this.startDate(),
+      endDate: this.endDate(),
     });
+  }
+
+  protected formatPreviewDate(value: string): string {
+    if (!value) return 'Select date';
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+      .format(new Date(`${value}T12:00:00`));
+  }
+
+  private resolvedStatus(asDraft: boolean): CampaignStatus {
+    if (asDraft) return 'Draft';
+    const today = new Date().toISOString().slice(0, 10);
+    if (this.startDate() > today) return 'Scheduled';
+    return this.status();
+  }
+
+  private generatedMessage(reward: RewardDto | null): string {
+    if (this.type() === 'Free Reward') return `Free reward campaign: ${reward?.name ?? 'Reward'}`;
+    if (this.type() === 'Discount') return `${Number(this.incentiveValue())}% customer discount`;
+    return `Earn ${Number(this.incentiveValue())} bonus points`;
+  }
+
+  private supportedType(type: CampaignType): CampaignType {
+    return ['Bonus Points', 'Discount', 'Free Reward'].includes(type) ? type : 'Bonus Points';
+  }
+
+  private supportedAudience(audience: CampaignAudience): CampaignAudience {
+    if (['All customers', 'Returning customers', 'VIP customers'].includes(audience)) return audience;
+    if (audience === 'VIP Members') return 'VIP customers';
+    if (audience === 'Inactive Customers') return 'Returning customers';
+    return 'All customers';
+  }
+
+  private loadRewards(): void {
+    this.rewardsLoading.set(true);
+    this.rewardApi.getRewards({ page: 1, pageSize: 100, isActive: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.rewards.set(response.data.items);
+          this.rewardsLoading.set(false);
+        },
+        error: () => {
+          this.rewards.set([]);
+          this.rewardsLoading.set(false);
+          this.rewardsError.set('Active rewards could not be loaded.');
+        },
+      });
   }
 
   @HostListener('document:keydown.escape')

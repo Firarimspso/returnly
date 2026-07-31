@@ -11,6 +11,10 @@ public sealed class PublicQrScanRequest
 
 public sealed record PublicQrCodeDto(
     string RestaurantName,
+    string? RestaurantLogoUrl,
+    string? RestaurantCoverImageUrl,
+    string? RestaurantDescription,
+    string PrimaryBrandColor,
     string QrCodeName,
     QrCodeType Type,
     int PointsPerScan,
@@ -18,7 +22,11 @@ public sealed record PublicQrCodeDto(
 
 public sealed record PublicQrScanResultDto(
     string RestaurantName,
+    string? RestaurantLogoUrl,
+    string PrimaryBrandColor,
     string CustomerFirstName,
     int PointsAwarded,
     int CurrentPoints,
-    DateTimeOffset ScannedAt);
+    DateTimeOffset ScannedAt,
+    string CustomerPortalToken,
+    DateTimeOffset CustomerPortalTokenExpiresAt);

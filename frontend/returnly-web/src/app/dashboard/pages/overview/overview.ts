@@ -1,27 +1,48 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import {
   DashboardAnalyticsDto,
   DashboardRecentActivityDto,
 } from '../../../core/models/dashboard-analytics.model';
-import { DashboardAnalyticsApiService } from '../../../core/services/dashboard-analytics-api.service';
+import {
+  DashboardAnalyticsApiService,
+  DashboardAnalyticsPeriod,
+} from '../../../core/services/dashboard-analytics-api.service';
+import {
+  DateRangeOption,
+  DateRangeSelectorComponent,
+} from '../../components/date-range-selector/date-range-selector';
 import { KpiCardComponent } from '../../components/kpi-card/kpi-card';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
+import { RewardVisualIconComponent } from '../../components/reward-visual-icon/reward-visual-icon';
+import {
+  DEFAULT_DASHBOARD_RANGE,
+  toDashboardAnalyticsPeriod,
+} from '../../utils/dashboard-period';
 
 @Component({
   selector: 'app-overview-page',
-  imports: [PageHeaderComponent, KpiCardComponent],
+  imports: [PageHeaderComponent, KpiCardComponent, DateRangeSelectorComponent, RewardVisualIconComponent],
   templateUrl: './overview.html',
-  styleUrl: './overview.scss',
 })
 export class OverviewPage {
   private readonly analyticsApi = inject(DashboardAnalyticsApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private analyticsRequest?: Subscription;
 
   protected readonly analytics = signal<DashboardAnalyticsDto | null>(null);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly selectedRange = signal<DateRangeOption>(DEFAULT_DASHBOARD_RANGE);
+  protected readonly hasActivity = computed(() =>
+    this.analytics()?.activityTrend.some((point) => point.count > 0) ?? false);
+  protected readonly hasRedemptions = computed(() =>
+    (this.analytics()?.redemptionBreakdown.length ?? 0) > 0);
+  protected readonly recentActivity = computed(() =>
+    this.analytics()?.recentActivity ?? []);
+  protected readonly topRewards = computed(() =>
+    this.analytics()?.topRewards.filter((reward) => reward.redemptions > 0) ?? []);
   protected readonly chartMaximum = computed(() =>
     Math.max(1, ...this.analytics()?.activityTrend.map((point) => point.count) ?? [0]));
   protected readonly chartBars = computed(() =>
@@ -30,7 +51,12 @@ export class OverviewPage {
   protected readonly chartLabels = computed(() => {
     const points = this.analytics()?.activityTrend ?? [];
     if (!points.length) return [];
-    const indexes = [0, Math.floor((points.length - 1) / 3), Math.floor((points.length - 1) * 2 / 3), points.length - 1];
+    const indexes = [...new Set([
+      0,
+      Math.floor((points.length - 1) / 3),
+      Math.floor((points.length - 1) * 2 / 3),
+      points.length - 1,
+    ])];
     return indexes.map((index) =>
       new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
         .format(new Date(`${points[index].date}T00:00:00`)));
@@ -51,14 +77,33 @@ export class OverviewPage {
   });
 
   constructor() {
-    this.analyticsApi.getAnalytics()
+    this.loadAnalytics('Last30Days');
+  }
+
+  protected changeRange(option: DateRangeOption): void {
+    this.selectedRange.set(option);
+    this.loadAnalytics(toDashboardAnalyticsPeriod(option.key));
+  }
+
+  private loadAnalytics(period: DashboardAnalyticsPeriod): void {
+    this.analyticsRequest?.unsubscribe();
+    this.analytics.set(null);
+    this.errorMessage.set(null);
+    this.loading.set(true);
+    this.analyticsRequest = this.analyticsApi.getAnalytics(period)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.loading.set(false)),
       )
       .subscribe({
-        next: (response) => this.analytics.set(response.data),
-        error: () => this.errorMessage.set('Dashboard analytics could not be loaded. Please try again.'),
+        next: (response) => {
+          this.analytics.set(response.data);
+          this.errorMessage.set(null);
+        },
+        error: () => {
+          this.analytics.set(null);
+          this.errorMessage.set('Dashboard analytics could not be loaded. Please try again.');
+        },
       });
   }
 

@@ -1,17 +1,23 @@
 <aside class="preview-panel">
   <header><span><b>QR Preview</b><small>Customer-facing scan experience</small></span></header>
-  <div class="preview-body">
-    <div class="restaurant"><span>SM</span><div><b>Solé & Maple</b><small>REWARDS</small></div></div>
-    <div class="qr-frame" [class.inactive]="qrCode().status === 'Inactive'">
-      <div class="qr-grid"><app-qr-image [token]="qrCode().token" [alt]="'QR code for ' + qrCode().name" /></div>
-      @if (qrCode().status === 'Inactive') { <em>Inactive</em> }
-    </div>
-    <h2>Scan. Earn. Enjoy.</h2><p>Scan to collect points and unlock rewards.</p>
-    <code>{{ qrCode().token }}</code>
+  <div class="preview-body" [style.--restaurant-brand]="brandColor()">
+    <article class="print-card">
+      <div class="restaurant"><span [style.background]="brandColor()">@if (restaurantLogo()) { <img [src]="restaurantLogo()" alt="" /> } @else { {{ restaurantInitials() }} }</span><div><b>{{ restaurantName() }}</b><small>LOYALTY REWARDS</small></div></div>
+      <span class="type-badge" [attr.data-type]="qrCode().type"><app-qr-type-icon [type]="qrCode().type" />{{ qrCode().type }}</span>
+      <h2>{{ qrCode().name }}</h2>
+      <p class="reward-headline">Scan to earn points</p>
+      <div class="qr-frame" [class.inactive]="qrCode().status === 'Inactive'">
+        <div class="qr-grid"><app-qr-image [token]="qrCode().token" [alt]="'QR code for ' + qrCode().name" /></div>
+        @if (qrCode().status === 'Inactive') { <em>Inactive</em> }
+      </div>
+      <div class="points-badge"><strong>+{{ qrCode().pointsPerScan.toLocaleString() }}</strong><span>loyalty points</span></div>
+      <p class="scan-instruction">Open your camera and scan to collect points and unlock rewards.</p>
+      <footer><span>Powered by</span><b>Returnly</b></footer>
+    </article>
   </div>
   <section class="details">
-    <div><small>Name</small><b>{{ qrCode().name }}</b></div><div><small>Type</small><b>{{ qrCode().type }}</b></div>
-    <div class="destination"><small>Points per scan</small><b>✦ {{ qrCode().pointsPerScan.toLocaleString() }}</b></div>
+    <div><small>Name</small><b>{{ qrCode().name }}</b></div><div><small>Type</small><b class="detail-type"><app-qr-type-icon [type]="qrCode().type" />{{ qrCode().type }}</b></div>
+    <div class="destination"><small>Points per scan</small><b>{{ qrCode().pointsPerScan.toLocaleString() }} pts</b></div>
   </section>
-  <footer><button class="download" type="button" (click)="download.emit()">⇩ Download PNG</button><button type="button" (click)="print.emit()">▣ Print</button></footer>
+  <footer><button class="download" type="button" (click)="download.emit()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 20h14" /></svg>Download PNG</button><button type="button" (click)="print.emit()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7v-7Z" /></svg>Print</button></footer>
 </aside>

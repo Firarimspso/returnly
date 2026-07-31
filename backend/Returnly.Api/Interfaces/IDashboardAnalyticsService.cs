@@ -4,5 +4,7 @@ namespace Returnly.Api.Interfaces;
 
 public interface IDashboardAnalyticsService
 {
-    Task<DashboardAnalyticsDto> GetAsync(CancellationToken cancellationToken = default);
+    Task<DashboardAnalyticsDto> GetAsync(
+        DashboardPeriod period,
+        CancellationToken cancellationToken = default);
 }

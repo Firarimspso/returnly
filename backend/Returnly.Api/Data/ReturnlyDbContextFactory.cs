@@ -8,10 +8,17 @@ public sealed class ReturnlyDbContextFactory : IDesignTimeDbContextFactory<Retur
     public ReturnlyDbContext CreateDbContext(string[] args)
     {
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+        var basePath = Directory.GetCurrentDirectory();
+        if (!File.Exists(Path.Combine(basePath, "appsettings.json")))
+        {
+            basePath = Path.GetFullPath(
+                Path.Combine(basePath, "..", "Returnly.Api"));
+        }
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
+            .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
+            .AddUserSecrets<ReturnlyDbContextFactory>(optional: true)
             .AddEnvironmentVariables()
             .Build();
 

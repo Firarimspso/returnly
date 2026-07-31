@@ -57,7 +57,9 @@ public sealed class QrCodeRepository(ReturnlyDbContext dbContext) : IQrCodeRepos
         Guid restaurantId,
         string token,
         CancellationToken cancellationToken = default) =>
-        dbContext.QrCodes.FirstOrDefaultAsync(
+        dbContext.QrCodes
+            .Include(qrCode => qrCode.Restaurant)
+            .FirstOrDefaultAsync(
             qrCode => qrCode.RestaurantId == restaurantId && qrCode.Token == token,
             cancellationToken);
 

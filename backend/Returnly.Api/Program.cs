@@ -22,11 +22,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(ServiceCollectionExtensions.FrontendCorsPolicy);
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+if (!string.Equals(
+        Environment.GetEnvironmentVariable("RETURNLY_EF_DESIGN_TIME"),
+        "true",
+        StringComparison.OrdinalIgnoreCase))
+{
+    app.Run();
+}
 
 public partial class Program;

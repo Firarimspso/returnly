@@ -18,22 +18,16 @@
       </label>
       <label class="field">
         <span>Phone number</span>
-        <input type="tel" inputmode="tel" autocomplete="tel" maxlength="12" pattern="\+?[0-9]*" placeholder="70123456 or +96170123456" [ngModel]="phoneNumber()" (ngModelChange)="phoneNumber.set($event)" />
-        @if (showPhoneError()) {
-          <small class="field-error">Please enter a valid Lebanese mobile number.</small>
-        }
+        <app-lebanese-phone-input
+          [required]="true"
+          [value]="phoneNumber()"
+          (valueChange)="phoneNumber.set($event)"
+          (validChange)="phoneValid.set($event)"
+        />
       </label>
       <label class="field">
         <span>Email address</span>
         <input type="email" autocomplete="email" [ngModel]="email()" (ngModelChange)="email.set($event)" />
-      </label>
-      <label class="field">
-        <span>Customer status</span>
-        <select [ngModel]="status()" (ngModelChange)="status.set($event)">
-          @for (option of statusOptions; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
       </label>
     </div>
 
@@ -44,6 +38,6 @@
 
   <footer>
     <button class="cancel" type="button" (click)="closed.emit()">Cancel</button>
-    <button class="submit" type="button" [disabled]="phoneInvalid()" (click)="submit()">Add customer</button>
+    <button class="submit" type="button" [disabled]="!phoneValid()" (click)="submit()">Add customer</button>
   </footer>
 </section>

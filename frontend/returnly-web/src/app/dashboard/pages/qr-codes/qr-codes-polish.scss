@@ -1,0 +1,274 @@
+.statistics article {
+  min-height: 92px;
+  gap: 13px;
+  padding: 17px;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.statistics article:hover {
+  border-color: #ddd8e7;
+  box-shadow: 0 10px 24px rgba(38, 31, 57, .06);
+  transform: translateY(-1px);
+}
+
+.stat-icon {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border-radius: 11px;
+}
+
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.statistics small {
+  color: #77717e;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.statistics b {
+  margin-top: 4px;
+  color: #2f2a35;
+  font-size: 18px;
+}
+
+.statistics p {
+  margin-top: 4px;
+  color: #8d8794;
+  font-size: 10px;
+}
+
+.toolbar {
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+}
+
+.search {
+  height: 40px;
+  border-radius: 9px;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.search:focus-within,
+.select-field:focus-within,
+.toolbar > select:focus {
+  border-color: #8874e8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(105, 82, 232, .1);
+}
+
+.search input { font-size: 13px; }
+
+.select-field {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  gap: 6px;
+  padding-left: 10px;
+  border: 1px solid #e2dfe5;
+  border-radius: 9px;
+  color: #6952e8;
+  background: #fff;
+  font-size: 16px;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.toolbar .select-field select {
+  height: 100%;
+  padding-left: 0;
+  border: 0;
+  outline: 0;
+  font-size: 12px;
+}
+
+.toolbar > select {
+  height: 40px;
+  outline: 0;
+  font-size: 12px;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+th {
+  padding: 12px 14px;
+  color: #77717e;
+  font-size: 10px;
+}
+
+td {
+  padding: 14px;
+  font-size: 12px;
+  transition: background .18s ease;
+}
+
+tbody tr {
+  transition: background .18s ease, box-shadow .18s ease;
+}
+
+tbody tr:hover { background: #fbfafe; }
+tbody tr.selected { background: #f8f6ff; }
+
+.table-qr {
+  width: 42px;
+  height: 42px;
+  padding: 3px;
+  border-radius: 9px;
+}
+
+.qr-name { gap: 10px; }
+
+.qr-name > i {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  font-size: 18px;
+}
+
+.qr-name b { font-size: 13px; }
+
+.qr-name small {
+  max-width: 130px;
+  margin-top: 4px;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  text-overflow: ellipsis;
+}
+
+.type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.type app-qr-type-icon { font-size: 13px; }
+
+.point-value {
+  font-size: 12px;
+}
+
+.status-toggle { gap: 8px; }
+
+.status-toggle > span {
+  padding: 5px 8px;
+  font-size: 9px;
+}
+
+.status-toggle > i {
+  width: 30px;
+  height: 18px;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+.status-toggle > i::after {
+  width: 12px;
+  height: 12px;
+  transition: transform .2s ease;
+}
+
+.status-toggle input:checked + i::after {
+  transform: translateX(12px);
+}
+
+td > strong { font-size: 12px; }
+
+.actions {
+  align-items: center;
+  gap: 5px;
+}
+
+.actions button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  place-items: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.actions button:hover {
+  border-color: #bdb2ed;
+  color: #5942c8;
+  background: #f7f5ff;
+  transform: translateY(-1px);
+}
+
+.actions .delete:hover {
+  border-color: #edc7c5;
+  color: #ad4844;
+  background: #fff3f2;
+}
+
+.actions svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.management > footer {
+  padding: 14px 16px;
+  font-size: 11px;
+}
+
+.management > footer button {
+  font-size: 11px;
+}
+
+.empty {
+  padding-block: 75px;
+}
+
+.empty > span,
+.no-preview > span {
+  font-size: 24px;
+}
+
+.empty h2 {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+.empty p,
+.no-preview p {
+  max-width: 480px;
+  margin-inline: auto;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.empty > div > button:not(.primary-button) {
+  min-height: 38px;
+  font-size: 11px;
+}
+
+@media (max-width: 850px) {
+  .module-layout app-qr-preview {
+    width: min(420px, 100%);
+    justify-self: center;
+  }
+}
+
+@media (max-width: 550px) {
+  .statistics article { min-height: 82px; }
+  .select-field, .toolbar > select { flex: 1; }
+  .toolbar .select-field select { min-width: 0; width: 100%; }
+  table { min-width: 980px; }
+}

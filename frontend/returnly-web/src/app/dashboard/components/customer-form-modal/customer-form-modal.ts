@@ -1,11 +1,11 @@
-import { Component, computed, HostListener, output, signal } from '@angular/core';
+import { Component, HostListener, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiCustomerStatus, CustomerUpsertRequest } from '../../../core/models/customer.model';
-import { validateLebaneseMobile } from '../../../core/validation/lebanese-mobile';
+import { CustomerUpsertRequest } from '../../../core/models/customer.model';
+import { LebanesePhoneInputComponent } from '../../../shared/components/lebanese-phone-input/lebanese-phone-input';
 
 @Component({
   selector: 'app-customer-form-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, LebanesePhoneInputComponent],
   templateUrl: './customer-form-modal.html',
   styleUrl: './customer-form-modal.scss',
 })
@@ -15,26 +15,15 @@ export class CustomerFormModalComponent {
 
   protected readonly firstName = signal('');
   protected readonly lastName = signal('');
-  protected readonly phoneNumber = signal('');
+  protected readonly phoneNumber = signal<string | null>(null);
+  protected readonly phoneValid = signal(false);
   protected readonly email = signal('');
-  protected readonly status = signal<ApiCustomerStatus>('Active');
   protected readonly error = signal('');
-  protected readonly statusOptions: Array<{ value: ApiCustomerStatus; label: string }> = [
-    { value: 'Active', label: 'Active' },
-    { value: 'Vip', label: 'VIP' },
-    { value: 'New', label: 'New' },
-  ];
-  protected readonly phoneInvalid = computed(
-    () => validateLebaneseMobile(this.phoneNumber()).normalized === null,
-  );
-  protected readonly showPhoneError = computed(
-    () => this.phoneNumber().trim().length > 0 && this.phoneInvalid(),
-  );
 
   protected submit(): void {
     const firstName = this.firstName().trim();
     const lastName = this.lastName().trim();
-    const phone = validateLebaneseMobile(this.phoneNumber());
+    const phone = this.phoneNumber();
     const email = this.email().trim();
 
     this.error.set('');
@@ -42,7 +31,7 @@ export class CustomerFormModalComponent {
       this.error.set('Enter the customer’s first and last name.');
       return;
     }
-    if (phone.error || !phone.normalized) {
+    if (!this.phoneValid() || !phone) {
       this.error.set('Please enter a valid Lebanese mobile number.');
       return;
     }
@@ -54,10 +43,10 @@ export class CustomerFormModalComponent {
     this.submitted.emit({
       firstName,
       lastName,
-      phoneNumber: phone.normalized,
+      phoneNumber: phone,
       email,
       birthday: null,
-      status: this.status(),
+      status: 'Active',
     });
   }
 

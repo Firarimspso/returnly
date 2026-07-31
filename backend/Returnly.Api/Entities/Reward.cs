@@ -13,6 +13,7 @@ public sealed class Reward : BaseEntity, ITenantEntity
     public int TotalRedemptions { get; set; }
 
     public Restaurant Restaurant { get; set; } = null!;
+    public ICollection<RedemptionRequest> RedemptionRequests { get; set; } = new List<RedemptionRequest>();
 }
 
 public enum RewardCategory

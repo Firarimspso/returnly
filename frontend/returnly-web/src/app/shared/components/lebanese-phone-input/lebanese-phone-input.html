@@ -1,0 +1,17 @@
+<div class="phone-control" [class.invalid]="touched() && error()">
+  <b>+961</b>
+  <input
+    type="tel"
+    inputmode="numeric"
+    maxlength="10"
+    placeholder="71 123 456"
+    [attr.autocomplete]="autocomplete()"
+    [value]="national()"
+    [attr.aria-invalid]="touched() && error() ? true : null"
+    (input)="update($any($event.target).value)"
+    (blur)="markTouched()"
+  />
+</div>
+@if (touched() && error()) {
+  <small class="phone-error" role="alert">{{ error() }}</small>
+}

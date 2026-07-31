@@ -1,0 +1,38 @@
+<div class="time-picker" [class.disabled]="disabled()" (click)="show($event)">
+  <input
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    maxlength="5"
+    placeholder="09:00"
+    [disabled]="disabled()"
+    [value]="draft()"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-expanded]="open()"
+    (focus)="show($event)"
+    (input)="updateDraft($event)"
+    (keydown)="handleKeydown($event)"
+  />
+  <button type="button" tabindex="-1" [disabled]="disabled()" aria-label="Open time selector">◷</button>
+
+  @if (open() && !disabled()) {
+    <div class="time-menu" role="dialog" aria-label="Choose a time" (click)="$event.stopPropagation()">
+      <div>
+        <label>
+          <span>Hour</span>
+          <select [ngModel]="selectedHour()" (ngModelChange)="selectPart('hour', $event)">
+            @for (hour of hours; track hour) { <option [value]="hour">{{ hour }}</option> }
+          </select>
+        </label>
+        <i>:</i>
+        <label>
+          <span>Minute</span>
+          <select [ngModel]="selectedMinute()" (ngModelChange)="selectPart('minute', $event)">
+            @for (minute of minutes; track minute) { <option [value]="minute">{{ minute }}</option> }
+          </select>
+        </label>
+      </div>
+      <button class="done" type="button" (click)="close()">Done</button>
+    </div>
+  }
+</div>

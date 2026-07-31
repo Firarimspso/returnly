@@ -8,6 +8,8 @@ using Returnly.Api.Repositories;
 using Returnly.Api.Services;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Returnly.Api.Configuration;
 
@@ -27,6 +29,20 @@ public static class ServiceCollectionExtensions
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         services.AddHttpContextAccessor();
         services.AddEndpointsApiExplorer();
+        services.AddRateLimiter(options =>
+        {
+            options.AddPolicy("PublicCustomerAuth", context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 30,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true,
+                    }));
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        });
         services.AddCors(options =>
         {
             options.AddPolicy(FrontendCorsPolicy, policy =>
@@ -54,6 +70,27 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IQrCodeScanProcessor, QrCodeScanProcessor>();
         services.AddScoped<IQrCodeService, QrCodeService>();
         services.AddScoped<IPublicQrCodeService, PublicQrCodeService>();
+        services.AddSingleton<ICustomerPortalTokenService, CustomerPortalTokenService>();
+        services.AddScoped<ICustomerPortalRepository, CustomerPortalRepository>();
+        services.AddScoped<ICustomerPortalService, CustomerPortalService>();
+        services.AddScoped<IRestaurantProfileRepository, RestaurantProfileRepository>();
+        services.AddScoped<IRestaurantProfileService, RestaurantProfileService>();
+        services.AddOptions<CustomerAuthOptions>()
+            .Bind(configuration.GetSection(CustomerAuthOptions.SectionName))
+            .ValidateDataAnnotations()
+            .Validate(
+                options => !options.CodeHashSecret.StartsWith("CHANGE_ME", StringComparison.Ordinal),
+                "CustomerAuth:CodeHashSecret must be supplied through environment configuration.")
+            .ValidateOnStart();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IVerificationCodeGenerator, CryptographicVerificationCodeGenerator>();
+        services.AddSingleton<IVerificationCodeHasher, HmacVerificationCodeHasher>();
+        services.AddSingleton<ICustomerVerificationSender, DevelopmentEmailVerificationSender>();
+        services.AddSingleton<ICustomerVerificationSender, UnconfiguredSmsVerificationSender>();
+        services.AddScoped<ICustomerAuthRepository, CustomerAuthRepository>();
+        services.AddScoped<ICustomerAuthService, CustomerAuthService>();
+        services.AddScoped<ICustomerLoginRepository, CustomerLoginRepository>();
+        services.AddScoped<ICustomerLoginService, CustomerLoginService>();
         return services;
     }
 
@@ -95,6 +132,75 @@ public static class ServiceCollectionExtensions
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret)),
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromMinutes(1),
+                };
+            })
+            .AddJwtBearer(CustomerPortalTokenService.AuthenticationScheme, options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = CustomerPortalTokenService.CustomerIssuer(jwt.Issuer),
+                    ValidateAudience = true,
+                    ValidAudience = CustomerPortalTokenService.CustomerAudience(jwt.Audience),
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        CustomerPortalTokenService.DeriveSigningKey(jwt.Secret)),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1),
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        if (string.IsNullOrWhiteSpace(context.Token)
+                            && context.HttpContext.Request.Path.StartsWithSegments(
+                                "/api/public",
+                                StringComparison.OrdinalIgnoreCase)
+                            && context.Request.Cookies.TryGetValue(
+                                CustomerPortalTokenService.CookieName,
+                                out var cookieToken))
+                        {
+                            context.Token = cookieToken;
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        var environment = context.HttpContext.RequestServices
+                            .GetRequiredService<IHostEnvironment>();
+                        if (environment.IsDevelopment())
+                        {
+                            var logger = context.HttpContext.RequestServices
+                                .GetRequiredService<ILoggerFactory>()
+                                .CreateLogger("CustomerSessionDiagnostics");
+                            logger.LogWarning(
+                                "[DEV CUSTOMER SESSION] JWT validation succeeded. Source={Source} Restaurant={RestaurantId} Customer={CustomerId}",
+                                context.Request.Cookies.ContainsKey(CustomerPortalTokenService.CookieName)
+                                    ? "HttpOnlyCookie"
+                                    : "AuthorizationBearer",
+                                context.Principal?.FindFirst("restaurant_id")?.Value,
+                                context.Principal?.FindFirst("customer_id")?.Value);
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnAuthenticationFailed = context =>
+                    {
+                        var environment = context.HttpContext.RequestServices
+                            .GetRequiredService<IHostEnvironment>();
+                        if (environment.IsDevelopment())
+                        {
+                            var logger = context.HttpContext.RequestServices
+                                .GetRequiredService<ILoggerFactory>()
+                                .CreateLogger("CustomerSessionDiagnostics");
+                            logger.LogWarning(
+                                "[DEV CUSTOMER SESSION] JWT validation failed. CookiePresent={CookiePresent} BearerPresent={BearerPresent} Reason={Reason}",
+                                context.Request.Cookies.ContainsKey(CustomerPortalTokenService.CookieName),
+                                context.Request.Headers.Authorization.ToString().StartsWith(
+                                    "Bearer ", StringComparison.OrdinalIgnoreCase),
+                                context.Exception.GetType().Name);
+                        }
+                        return Task.CompletedTask;
+                    },
                 };
             });
         services.AddAuthorization();

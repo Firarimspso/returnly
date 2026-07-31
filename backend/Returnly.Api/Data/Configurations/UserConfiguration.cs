@@ -35,17 +35,30 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey(user => user.RestaurantId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasData(new User
-        {
-            Id = SeedData.DemoAdminUserId,
-            RestaurantId = SeedData.DemoRestaurantId,
-            FirstName = "Adam",
-            LastName = "Miller",
-            Email = SeedData.DemoAdminEmail,
-            PasswordHash = SeedData.DemoAdminPasswordHash,
-            Role = UserRole.Admin,
-            IsActive = true,
-            CreatedAt = SeedData.SeededAt,
-        });
+        builder.HasData(
+            new User
+            {
+                Id = SeedData.DemoAdminUserId,
+                RestaurantId = SeedData.DemoRestaurantId,
+                FirstName = "Adam",
+                LastName = "Miller",
+                Email = SeedData.DemoAdminEmail,
+                PasswordHash = SeedData.DemoAdminPasswordHash,
+                Role = UserRole.Admin,
+                IsActive = true,
+                CreatedAt = SeedData.SeededAt,
+            },
+            new User
+            {
+                Id = SeedData.SecondDemoAdminUserId,
+                RestaurantId = SeedData.SecondDemoRestaurantId,
+                FirstName = "Maya",
+                LastName = "Haddad",
+                Email = SeedData.SecondDemoAdminEmail,
+                PasswordHash = SeedData.DemoAdminPasswordHash,
+                Role = UserRole.Admin,
+                IsActive = true,
+                CreatedAt = SeedData.SeededAt,
+            });
     }
 }

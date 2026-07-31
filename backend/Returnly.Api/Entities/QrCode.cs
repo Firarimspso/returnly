@@ -15,6 +15,8 @@ public sealed class QrCode : BaseEntity, ITenantEntity
     public Restaurant Restaurant { get; set; } = null!;
     public ICollection<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
     public ICollection<QrCodeScan> Scans { get; set; } = new List<QrCodeScan>();
+    public ICollection<CustomerVerificationChallenge> CustomerVerificationChallenges { get; set; } =
+        new List<CustomerVerificationChallenge>();
 }
 
 public enum QrCodeType

@@ -1,0 +1,19 @@
+.reward-visual {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+  font-size: 31px;
+}
+
+.drawer-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.drawer-category[data-category='Food'] { color: #9a4e32; background: #fbeee9; }
+.drawer-category[data-category='Drinks'] { color: #287567; background: #e7f5f1; }
+.drawer-category[data-category='Discount'] { color: #6749c5; background: #f0ecff; }
+.drawer-category[data-category='Experience'] { color: #9b681d; background: #fff3dc; }

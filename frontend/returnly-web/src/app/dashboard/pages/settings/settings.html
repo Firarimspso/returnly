@@ -1,10 +1,109 @@
-<app-page-header title="Settings" description="Manage your restaurant profile and portal preferences."><button class="save">Save changes</button></app-page-header>
-<div class="settings-layout">
-  <nav><a href="#restaurant" class="active">Restaurant information</a><a href="#hours">Business hours</a><a href="#branding">Logo & branding</a><a href="#theme">Theme settings</a></nav>
-  <div class="sections">
-    <section id="restaurant"><header><h2>Restaurant information</h2><p>These details appear across your loyalty experience.</p></header><div class="form-grid"><label><span>Restaurant name</span><input value="Solé & Maple" /></label><label><span>Business email</span><input type="email" value="hello@solemaple.com" /></label><label><span>Phone number</span><input value="+1 (555) 214-8842" /></label><label><span>Website</span><input value="https://solemaple.com" /></label><label class="wide"><span>Address</span><input value="214 Maple Street, Portland, OR 97205" /></label></div></section>
-    <section id="hours"><header><h2>Business hours</h2><p>Set when customers can earn and redeem rewards.</p></header><div class="hours">@for(day of days;track day.name){<div><label class="toggle"><input type="checkbox" [(ngModel)]="day.open" /><i></i></label><b>{{day.name}}</b>@if(day.open){<input type="time" [(ngModel)]="day.from" /><span>to</span><input type="time" [(ngModel)]="day.to" />}@else{<em>Closed</em>}</div>}</div></section>
-    <section id="branding"><header><h2>Logo & branding</h2><p>Upload a logo to personalize your customer touchpoints.</p></header><div class="upload"><span>SM</span><div><b>Restaurant logo</b><p>PNG, JPG, or SVG. Recommended 512 × 512px.</p><button>Upload new logo</button><button class="remove">Remove</button></div></div></section>
-    <section id="theme"><header><h2>Theme settings</h2><p>Match the customer experience to your brand.</p></header><div class="theme"><div><label><span>Brand color</span><div class="color-input"><i [style.background]="accent()"></i><input [ngModel]="accent()" (ngModelChange)="accent.set($event)" /></div></label><label><span>Interface density</span><select [ngModel]="compact()" (ngModelChange)="compact.set($event)"><option [ngValue]="false">Comfortable</option><option [ngValue]="true">Compact</option></select></label></div><aside [style.--preview-accent]="accent()"><span class="preview-logo">SM</span><h3>Solé & Maple</h3><p>240 points available</p><button>View rewards</button></aside></div></section>
+<app-page-header title="Settings" description="Manage your account, notifications, security, and application preferences.">
+  <button class="save-button" [class.saved]="saved()" type="button" [disabled]="loading() || saving()" (click)="save()">
+    @if (saving()) { <i></i> Saving… }
+    @else if (saved()) { <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg> Saved }
+    @else { Save changes }
+  </button>
+</app-page-header>
+
+@if (showToast()) {
+  <div class="settings-toast" role="status">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+    <span><b>Settings saved</b><small>Your application preferences are up to date.</small></span>
   </div>
-</div>
+}
+
+@if (loading()) {
+  <div class="settings-layout loading-layout" aria-label="Loading settings" aria-live="polite">
+    <aside class="nav-skeleton">@for (item of navigation; track item.id) { <i></i> }</aside>
+    <div class="section-skeletons">@for (item of [1, 2, 3]; track item) { <section><header><i></i><span></span></header><div><b></b><b></b><b></b></div></section> }</div>
+  </div>
+} @else {
+  <div class="settings-layout">
+    <nav aria-label="Settings sections">
+      @for (item of navigation; track item.id) {
+        <button type="button" [class.active]="activeSection() === item.id" [class.danger]="item.id === 'danger-zone'" (click)="scrollTo(item.id)">
+          {{ item.label }}
+        </button>
+      }
+    </nav>
+
+    <div class="sections">
+      <section id="general">
+        <header><span class="section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></span><div><h2>General</h2><p>Account details and regional defaults for your workspace.</p></div></header>
+        <div class="section-body form-grid">
+          <label><span>Restaurant account email</span><input type="email" [value]="user()?.email || ''" readonly /><small>Used for account access and important service messages.</small></label>
+          <div class="field-action"><span>Password</span><button type="button" disabled>Change password <em>Coming Soon</em></button><small>Password management will be available from this workspace.</small></div>
+          <label><span>Time zone</span><select [ngModel]="settings().timeZone" (ngModelChange)="patch('timeZone', $event)"><option value="Asia/Beirut">Beirut (GMT+3)</option><option value="Asia/Dubai">Dubai (GMT+4)</option><option value="Europe/London">London</option><option value="America/New_York">New York</option></select><small>Used for reports, campaigns, and activity timestamps.</small></label>
+          <label><span>Language</span><select [ngModel]="settings().language" (ngModelChange)="patch('language', $event)"><option value="en">English</option><option value="ar" disabled>Arabic — Coming Soon</option><option value="fr" disabled>French — Coming Soon</option></select><small>Controls the language of the admin dashboard.</small></label>
+          <label><span>Currency</span><select [ngModel]="settings().currency" (ngModelChange)="patch('currency', $event)"><option value="LBP">Lebanese Pound (LBP)</option><option value="USD">US Dollar (USD)</option><option value="EUR">Euro (EUR)</option></select><small>Future-ready display preference; this does not affect billing yet.</small></label>
+        </div>
+      </section>
+
+      <section id="notifications">
+        <header><span class="section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" /></svg></span><div><h2>Notifications</h2><p>Choose which operational updates arrive by email.</p></div></header>
+        <div class="section-body preference-list">
+          <label><span><b>Email when a reward is redeemed</b><small>Receive a message whenever staff confirm a customer redemption.</small></span><input type="checkbox" [ngModel]="settings().notifications.rewardRedeemed" (ngModelChange)="updateNotification('rewardRedeemed', $event)" /><i></i></label>
+          <label><span><b>Weekly analytics report</b><small>Get a weekly summary of visits, points, and reward performance.</small></span><input type="checkbox" [ngModel]="settings().notifications.weeklyAnalytics" (ngModelChange)="updateNotification('weeklyAnalytics', $event)" /><i></i></label>
+          <label><span><b>Product updates</b><small>Hear about new Returnly tools and improvements.</small></span><input type="checkbox" [ngModel]="settings().notifications.productUpdates" (ngModelChange)="updateNotification('productUpdates', $event)" /><i></i></label>
+          <label><span><b>System maintenance notifications</b><small>Important information about planned service interruptions.</small></span><input type="checkbox" [ngModel]="settings().notifications.systemMaintenance" (ngModelChange)="updateNotification('systemMaintenance', $event)" /><i></i></label>
+        </div>
+      </section>
+
+      <section id="security">
+        <header><span class="section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6l-8-3Z" /><path d="m9 12 2 2 4-4" /></svg></span><div><h2>Security</h2><p>Review your session and upcoming account protections.</p></div></header>
+        <div class="section-body">
+          <div class="security-summary">
+            <article><span>Last login</span><b>{{ sessionStarted() }}</b><small>Successful administrator sign-in</small></article>
+            <article><span>Current active session</span><b>This browser</b><small><i></i> Active now</small></article>
+            <button type="button" disabled>Log out from all devices <em>Coming Soon</em></button>
+          </div>
+          <div class="future-grid">
+            <article aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg><span><b>Two-factor authentication</b><small>Add another verification step when signing in.</small></span><em>Coming Soon</em></article>
+            <article aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4" /></svg><span><b>Audit log</b><small>Review security and account activity across your team.</small></span><em>Coming Soon</em></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="team">
+        <header><span class="section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 14 0M16 5a4 4 0 0 1 0 7M18 15a6 6 0 0 1 4 6" /></svg></span><div><h2>Team management</h2><p>Prepared for secure multi-user restaurant access.</p></div><button class="invite-button" type="button" disabled>Invite team member <em>Coming Soon</em></button></header>
+        <div class="section-body team-list">
+          <article class="owner"><i>{{ ownerInitials() }}</i><span><b>{{ ownerName() }}</b><small>{{ user()?.email }}</small></span><em>Owner</em><strong>Active</strong></article>
+          @for (role of ['Manager', 'Staff', 'Cashier']; track role) {
+            <article class="placeholder" aria-disabled="true"><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></i><span><b>{{ role }}</b><small>Role prepared for future team access</small></span><em>Not assigned</em><strong>Coming Soon</strong></article>
+          }
+        </div>
+      </section>
+
+      <section id="preferences">
+        <header><span class="section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M10 14v6" /></svg></span><div><h2>Preferences</h2><p>Personalize how the Returnly dashboard works for you.</p></div></header>
+        <div class="section-body form-grid">
+          <label><span>Interface density</span><select [ngModel]="settings().density" (ngModelChange)="patch('density', $event)"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select><small>Controls how much information fits on each screen.</small></label>
+          <label><span>Default analytics period</span><select [ngModel]="settings().analyticsPeriod" (ngModelChange)="patch('analyticsPeriod', $event)"><option value="today">Today</option><option value="last-7-days">Last 7 Days</option><option value="last-30-days">Last 30 Days</option><option value="all-time">All Time</option></select><small>Used when opening dashboards and analytics.</small></label>
+          <label><span>Default landing page after login</span><select [ngModel]="settings().landingPage" (ngModelChange)="patch('landingPage', $event)"><option value="dashboard">Dashboard</option><option value="analytics">Analytics</option><option value="customers">Customers</option><option value="rewards">Rewards</option></select><small>Choose the first workspace page you want to see.</small></label>
+          <div class="theme-note"><span>Theme</span><b>Light</b><small>Returnly currently uses its optimized light interface. More themes are planned.</small></div>
+        </div>
+      </section>
+
+      <section id="danger-zone" class="danger-zone">
+        <header><span class="section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z" /><path d="M12 9v5M12 18h.01" /></svg></span><div><h2>Danger zone</h2><p>High-impact account operations require additional verification.</p></div></header>
+        <div class="danger-list">
+          <article><span><b>Export restaurant data</b><small>Download a copy of customers, rewards, and loyalty activity.</small></span><button type="button" disabled>Export data <em>Coming Soon</em></button></article>
+          <article><span><b>Deactivate restaurant</b><small>Temporarily disable restaurant access and public loyalty experiences.</small></span><button type="button" disabled>Deactivate <em>Coming Soon</em></button></article>
+          <article><span><b>Delete restaurant</b><small>Permanently remove the restaurant workspace and its data.</small></span><button type="button" (click)="openDeleteConfirmation()">Delete restaurant</button></article>
+        </div>
+      </section>
+    </div>
+  </div>
+}
+
+@if (deleteConfirmationOpen()) {
+  <div class="dialog-backdrop" (click)="closeDeleteConfirmation()">
+    <section class="confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-title" (click)="$event.stopPropagation()">
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z" /><path d="M12 9v5M12 18h.01" /></svg></span>
+      <h2 id="delete-title">Delete restaurant?</h2>
+      <p>This action will permanently remove the restaurant and all loyalty data. Deletion is unavailable until secure server-side verification is implemented.</p>
+      <div><button type="button" (click)="closeDeleteConfirmation()">Cancel</button><button type="button" disabled>Delete permanently <em>Coming Soon</em></button></div>
+    </section>
+  </div>
+}

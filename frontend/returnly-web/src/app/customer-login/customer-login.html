@@ -1,0 +1,36 @@
+<main class="customer-login-page">
+  <header><a routerLink="/"><span><i></i></span><b>Returnly</b></a><small>MY REWARDS</small></header>
+  <section class="login-card">
+    @switch (state()) {
+      @case ('restoring') { <div class="login-state"><div class="spinner"></div><h1>Opening your rewards</h1><p>Checking your trusted customer session.</p></div> }
+      @case ('sending') { <div class="login-state"><div class="spinner"></div><h1>Sending your code</h1><p>Preparing a secure one-time verification code.</p></div> }
+      @case ('verifying') { <div class="login-state"><div class="spinner"></div><h1>Verifying securely</h1><p>One moment while we open your rewards.</p></div> }
+      @case ('code') {
+        <div class="login-state">
+          <span class="login-icon">@</span><p class="eyebrow">CHECK YOUR EMAIL</p><h1>Enter your 6-digit code</h1>
+          <p>We sent a one-time code to <b>{{ challenge()?.maskedDestination }}</b>.</p>
+          <div class="otp-row" (paste)="paste($event)">@for (digit of digits(); track $index) { <input class="login-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="1" [value]="digit" [attr.aria-label]="'Verification digit ' + ($index + 1)" (input)="updateDigit($index, $event)" (keydown)="keydown($index, $event)" /> }</div>
+          @if (error()) { <p class="login-error" role="alert">{{ error() }}</p> }
+          <button class="login-primary" type="button" [disabled]="digits().join('').length !== 6" (click)="verify()">Verify and view rewards</button>
+          <div class="login-links"><button type="button" [disabled]="resendSeconds() > 0" (click)="resend()">{{ resendSeconds() ? 'Resend in ' + resendSeconds() + 's' : 'Resend code' }}</button><span>·</span><button type="button" (click)="changeEmail()">Change email</button></div>
+        </div>
+      }
+      @case ('restaurants') {
+        <div class="login-state"><span class="login-icon">R</span><p class="eyebrow">CHOOSE A RESTAURANT</p><h1>Where would you like to view rewards?</h1><p>Your email is connected to more than one rewards wallet.</p>
+          @if (error()) { <p class="login-error" role="alert">{{ error() }}</p> }
+          <div class="restaurant-options">@for (restaurant of result()?.restaurants || []; track restaurant.customerKey) { <button type="button" (click)="selectRestaurant(restaurant.customerKey)" [disabled]="!!selectingKey()"><span [style.background]="restaurant.primaryBrandColor">@if (restaurant.restaurantLogoUrl) { <img [src]="restaurant.restaurantLogoUrl" alt="" /> } @else { R }</span><i><b>{{ restaurant.restaurantName }}</b><small>{{ restaurant.currentPoints.toLocaleString() }} points</small></i><em>{{ selectingKey() === restaurant.customerKey ? 'Opening…' : '→' }}</em></button> }</div>
+        </div>
+      }
+      @case ('empty') { <div class="login-state"><span class="login-icon">◇</span><p class="eyebrow">NO REWARDS YET</p><h1>No rewards account found</h1><p>We verified your email, but there are no restaurant rewards connected to it yet.</p><button class="login-primary" type="button" (click)="changeEmail()">Try another email</button></div> }
+      @default {
+        <div class="login-state"><span class="login-icon">✦</span><p class="eyebrow">YOUR LOYALTY WALLET</p><h1>View your rewards</h1><p>Sign in without a password to see your points, available rewards, and redemption history.</p>
+          <div class="channel-tabs"><button class="active" type="button"><b>Email</b><small>Available now</small></button><button type="button" disabled><b>Phone</b><small>SMS coming soon</small></button></div>
+          <label for="rewards-email">Email address</label><input id="rewards-email" type="email" autocomplete="email" placeholder="you@email.com" [ngModel]="email()" (ngModelChange)="email.set($event); error.set('')" />
+          @if (error()) { <p class="login-error" role="alert">{{ error() }}</p> }
+          <button class="login-primary" type="button" [disabled]="!email().trim()" (click)="requestCode()">Send verification code</button><small class="privacy">We’ll send a secure, one-time code. No password needed.</small>
+        </div>
+      }
+    }
+  </section>
+  <footer>Powered by <b>Returnly</b> · Secure loyalty rewards</footer>
+</main>

@@ -2,12 +2,14 @@
   <button class="primary-button" type="button" (click)="openCreate()">＋ Create campaign</button>
 </app-page-header>
 
-<section class="statistics" aria-label="Campaign statistics">
-  <article><span class="stat-icon active">↗</span><div><small>Active campaigns</small><b>{{ activeCount() }}</b><p>{{ campaignData.campaigns().length }} campaigns created</p></div></article>
-  <article><span class="stat-icon sent">✉</span><div><small>Messages sent</small><b>{{ totalSent().toLocaleString() }}</b><p>Across all campaigns</p></div></article>
-  <article><span class="stat-icon conversion">⌁</span><div><small>Conversion rate</small><b>{{ averageConversion().toFixed(1) }}%</b><p>{{ totalConversions().toLocaleString() }} customer actions</p></div></article>
-  <article><span class="stat-icon revenue">$</span><div><small>Revenue influenced</small><b>${{ revenueInfluenced().toLocaleString() }}</b><p>Attributed campaign revenue</p></div></article>
-</section>
+@if (campaignData.campaigns().length) {
+  <section class="statistics" aria-label="Campaign statistics">
+    <article><span class="stat-icon active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2" /></svg></span><div><small>Active campaigns</small><b>{{ activeCount() }}</b><p>{{ campaignData.campaigns().length }} campaigns created</p></div></article>
+    <article><span class="stat-icon sent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4V6Zm0 1 8 6 8-6" /></svg></span><div><small>Messages sent</small><b>{{ totalSent().toLocaleString() }}</b><p>Across all campaigns</p></div></article>
+    <article><span class="stat-icon conversion"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /><circle cx="5" cy="12" r="2" /></svg></span><div><small>Conversion rate</small><b>{{ averageConversion().toFixed(1) }}%</b><p>{{ totalConversions().toLocaleString() }} customer actions</p></div></article>
+    <article><span class="stat-icon revenue"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v10m3-7.5c-.7-1-1.7-1.5-3-1.5-1.7 0-3 1-3 2.2 0 3.3 6 1.5 6 4.6 0 1.2-1.3 2.2-3 2.2-1.3 0-2.4-.5-3-1.5" /></svg></span><div><small>Revenue influenced</small><b>${{ revenueInfluenced().toLocaleString() }}</b><p>Attributed campaign revenue</p></div></article>
+  </section>
+}
 
 <section class="management">
   <header class="toolbar">
@@ -23,16 +25,16 @@
         <tbody>
           @for (campaign of campaigns(); track campaign.id) {
             <tr>
-              <td><span class="campaign-name" [class]="campaign.type.toLowerCase().replaceAll(' ', '-')"><i>{{ typeIcon(campaign.type) }}</i><span><b>{{ campaign.name }}</b><small>{{ campaign.type }}</small></span></span></td>
-              <td><span class="audience"><i>♙</i>{{ campaign.audience }}</span></td>
+              <td><span class="campaign-name" [class]="campaign.type.toLowerCase().replaceAll(' ', '-')"><i><app-campaign-type-icon [type]="campaign.type" /></i><span><b>{{ campaign.name }}</b><small class="campaign-type"><app-campaign-type-icon [type]="campaign.type" />{{ campaign.type }}</small><em>{{ campaignValue(campaign) }}</em></span></span></td>
+              <td><span class="audience"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm9 0v6m3-3h-6" /></svg></i>{{ campaign.audience }}</span></td>
               <td><span class="schedule"><b>{{ formatSchedule(campaign) }}</b><small>Created {{ campaign.createdAt }}</small></span></td>
               <td>
                 @if (campaign.sent) {
                   <div class="performance"><span><small>Sent</small><b>{{ campaign.sent.toLocaleString() }}</b></span><span><small>Open</small><b>{{ openRate(campaign).toFixed(1) }}%</b></span><span><small>Converted</small><b>{{ conversionRate(campaign).toFixed(1) }}%</b></span></div>
                 } @else { <span class="no-data">No performance data yet</span> }
               </td>
-              <td><label class="status-control"><span [class]="campaign.status.toLowerCase()">{{ campaign.status }}</span><input type="checkbox" [checked]="campaign.status === 'Active'" [disabled]="campaign.status === 'Completed'" (change)="toggleCampaign(campaign)" /><i></i></label></td>
-              <td><div class="actions"><button type="button" title="Edit campaign" (click)="openEdit(campaign)">✎</button><button class="delete" type="button" title="Delete campaign" (click)="deletingId.set(campaign.id)">⌫</button></div></td>
+              <td><label class="status-control"><span [attr.data-status]="displayStatus(campaign)">{{ displayStatus(campaign) }}</span><input type="checkbox" [checked]="campaign.status === 'Active'" [disabled]="displayStatus(campaign) === 'Completed' || displayStatus(campaign) === 'Expired'" (change)="toggleCampaign(campaign)" /><i></i></label></td>
+              <td><div class="actions"><button type="button" title="Edit campaign" aria-label="Edit campaign" (click)="openEdit(campaign)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 4 6 6M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z" /></svg></button><button class="delete" type="button" title="Delete campaign" aria-label="Delete campaign" (click)="deletingId.set(campaign.id)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 14H7L6 7" /></svg></button></div></td>
             </tr>
           }
         </tbody>
@@ -40,12 +42,8 @@
     </div>
     <footer><span>Showing {{ campaigns().length }} of {{ campaignData.campaigns().length }} campaigns</span><button type="button" (click)="openCreate()">＋ New campaign</button></footer>
   } @else {
-    <div class="empty"><span>↗</span><h2>No campaigns found</h2><p>Adjust your filters or create a campaign to start engaging customers.</p><div><button type="button" (click)="clearFilters()">Clear filters</button><button class="primary-button" type="button" (click)="openCreate()">＋ Create campaign</button></div></div>
+    <div class="empty"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2" /></svg></span><h2>No campaigns yet</h2><p>Run promotions to bring customers back and increase repeat visits.</p><div><button type="button" (click)="clearFilters()">Clear filters</button><button class="primary-button" type="button" (click)="openCreate()">Create Campaign</button></div></div>
   }
-</section>
-
-<section class="insight">
-  <span>✦</span><div><b>Campaign performance insight</b><p>Birthday rewards currently convert 2.8× better than general promotions. Consider expanding birthday audience campaigns.</p></div><button type="button">View analytics →</button>
 </section>
 
 @if (formOpen()) { <app-campaign-form-modal [campaign]="editingCampaign()" (closed)="closeForm()" (saved)="saveCampaign($event)" /> }

@@ -14,9 +14,10 @@ public sealed class DashboardController(
     [HttpGet("analytics")]
     [ProducesResponseType<ApiResponse<DashboardAnalyticsDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<DashboardAnalyticsDto>>> GetAnalytics(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] DashboardPeriod period = DashboardPeriod.Last30Days)
     {
-        var analytics = await dashboardAnalyticsService.GetAsync(cancellationToken);
+        var analytics = await dashboardAnalyticsService.GetAsync(period, cancellationToken);
         return Ok(new ApiResponse<DashboardAnalyticsDto>(analytics));
     }
 }

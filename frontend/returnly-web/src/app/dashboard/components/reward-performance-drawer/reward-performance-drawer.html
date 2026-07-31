@@ -1,0 +1,24 @@
+<button class="drawer-backdrop" type="button" aria-label="Close reward performance" (click)="closed.emit()"></button>
+<aside class="drawer" role="dialog" aria-modal="true" [attr.aria-label]="'Performance for ' + reward().name">
+  <header><span><b>Reward performance</b><small>Analytics preview</small></span><button type="button" aria-label="Close drawer" (click)="closed.emit()">×</button></header>
+  <div class="drawer-scroll">
+    <section class="reward-heading" [style.--reward-color]="reward().color">
+      <div class="reward-visual">
+        @if (reward().imageUrl) { <img [src]="reward().imageUrl" [alt]="reward().name" /> }
+        @else { <app-reward-visual-icon [icon]="reward().icon" [category]="reward().category" /> }
+      </div>
+      <span><small class="drawer-category" [attr.data-category]="reward().category"><app-reward-category-icon [category]="reward().category" />{{ reward().category }}</small><h2>{{ reward().name }}</h2><p>{{ reward().description }}</p></span>
+    </section>
+    <section class="primary-metric">
+      <small>Total redemptions</small><strong>{{ reward().redemptions.toLocaleString() }}</strong>
+      <p>{{ redemptionLabel(reward().redemptions) }}</p>
+    </section>
+    <section class="metrics">
+      <article><i>↗</i><span><small>Popularity</small><b>#{{ popularityRank() }} of {{ totalRewards() }}</b></span></article>
+      <article><i>✦</i><span><small>Required points</small><b>{{ reward().points.toLocaleString() }} pts</b></span></article>
+      <article class="pending"><i>♙</i><span><small>Eligible customers</small><b>Awaiting analytics</b></span></article>
+      <article class="pending"><i>◷</i><span><small>Average time to unlock</small><b>Awaiting analytics</b></span></article>
+    </section>
+    <section class="analytics-note"><i>i</i><span><b>More insight is coming</b><p>Customer eligibility, unlock speed, conversion rate, and trends will appear when the reward analytics endpoint is available.</p></span></section>
+  </div>
+</aside>

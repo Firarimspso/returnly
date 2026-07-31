@@ -6,7 +6,13 @@ import { RewardDto, RewardUpsertRequest } from '../../../core/models/reward.mode
 import { RewardApiService } from '../../../core/services/reward-api.service';
 import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog';
 import { PageHeaderComponent } from '../../components/page-header/page-header';
+import { RewardCategoryIconComponent } from '../../components/reward-category-icon/reward-category-icon';
 import { RewardFormModalComponent } from '../../components/reward-form-modal/reward-form-modal';
+import { RewardPerformanceDrawerComponent } from '../../components/reward-performance-drawer/reward-performance-drawer';
+import {
+  normalizeRewardIcon,
+  RewardVisualIconComponent,
+} from '../../components/reward-visual-icon/reward-visual-icon';
 import { Reward, RewardCategory, RewardDraft } from '../../models/dashboard.models';
 
 type RewardStatusFilter = 'All' | 'Active' | 'Inactive';
@@ -15,9 +21,17 @@ type RewardView = 'grid' | 'table';
 
 @Component({
   selector: 'app-rewards-page',
-  imports: [FormsModule, PageHeaderComponent, RewardFormModalComponent, ConfirmationDialogComponent],
+  imports: [
+    FormsModule,
+    PageHeaderComponent,
+    RewardCategoryIconComponent,
+    RewardVisualIconComponent,
+    RewardFormModalComponent,
+    ConfirmationDialogComponent,
+    RewardPerformanceDrawerComponent,
+  ],
   templateUrl: './rewards.html',
-  styleUrl: './rewards.scss',
+  styleUrls: ['./rewards.scss', './rewards-icons.scss', './rewards-final-polish.scss'],
 })
 export class RewardsPage {
   private readonly rewardApi = inject(RewardApiService);
@@ -35,6 +49,7 @@ export class RewardsPage {
   protected readonly formOpen = signal(false);
   protected readonly editingRewardId = signal<number | null>(null);
   protected readonly deletingRewardId = signal<number | null>(null);
+  protected readonly performanceRewardId = signal<number | null>(null);
   protected readonly statusOptions: RewardStatusFilter[] = ['All', 'Active', 'Inactive'];
   protected readonly categories: RewardCategoryFilter[] = ['All categories', 'Food', 'Drinks', 'Discount', 'Experience'];
 
@@ -60,6 +75,9 @@ export class RewardsPage {
   protected readonly deletingReward = computed(() =>
     this.data.rewards().find((reward) => reward.id === this.deletingRewardId()) ?? null,
   );
+  protected readonly performanceReward = computed(() =>
+    this.data.rewards().find((reward) => reward.id === this.performanceRewardId()) ?? null,
+  );
 
   constructor() {
     this.loadRewards();
@@ -73,6 +91,41 @@ export class RewardsPage {
   protected openEdit(reward: Reward): void {
     this.editingRewardId.set(reward.id);
     this.formOpen.set(true);
+  }
+
+  protected duplicateReward(reward: Reward): void {
+    const request = this.toRequest({
+      ...reward,
+      name: `${reward.name} Copy`.slice(0, 60),
+      active: false,
+    });
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.rewardApi.createReward(request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          this.rewardRecords.update((rewards) => [this.toViewReward(response.data), ...rewards]);
+        },
+        error: () => this.errorMessage.set('The reward could not be duplicated. Please try again.'),
+      });
+  }
+
+  protected pointLabel(points: number): string {
+    return `${points.toLocaleString()} pts`;
+  }
+
+  protected redemptionLabel(redemptions: number): string {
+    return `Redeemed ${redemptions.toLocaleString()} ${redemptions === 1 ? 'time' : 'times'}`;
+  }
+
+  protected popularityRank(reward: Reward): number {
+    return [...this.data.rewards()]
+      .sort((first, second) => second.redemptions - first.redemptions)
+      .findIndex((item) => item.id === reward.id) + 1;
   }
 
   protected saveReward(draft: RewardDraft): void {
@@ -198,7 +251,8 @@ export class RewardsPage {
       description: reward.description,
       points: reward.requiredPoints,
       active: reward.isActive,
-      icon: reward.icon || '◇',
+      icon: normalizeRewardIcon(reward.icon, reward.category),
+      imageUrl: null,
       redemptions: reward.totalRedemptions,
       category: reward.category,
       createdAt: new Intl.DateTimeFormat('en-US', {
